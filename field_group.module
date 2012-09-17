@@ -1388,12 +1388,12 @@ function field_group_info_groups($entity_type = NULL, $bundle = NULL, $view_mode
   static $groups = FALSE;
 
   if (!$groups || $reset) {
-    if (!$reset && $cached = cache_get('field_groups', 'cache_field')) {
+    if (!$reset && $cached = cache('cache_field')->get('field_groups')) {
       $groups = $cached->data;
     }
     else {
       $groups = field_group_read_groups();
-      cache_set('field_groups', $groups, 'cache_field');
+      cache('cache_field')->set('field_groups', $groups);
     }
   }
 
@@ -1567,7 +1567,7 @@ function field_group_group_export_delete($group, $ctools_crud = TRUE) {
 
   $query->execute();
 
-  cache_clear_all('field_groups', 'cache_field');
+  cach('cache_field')->delete('field_groups');
   module_invoke_all('field_group_delete_field_group', $group);
 
 }
@@ -1608,7 +1608,7 @@ function field_group_group_save(& $group) {
 function field_group_formatter_info($display_overview = FALSE) {
   $cache = &drupal_static(__FUNCTION__, array());
   if (empty($cache)) {
-    if ($cached = cache_get('field_group_formatter_info', 'cache_field')) {
+    if ($cached = cache('cache_field')->get('field_group_formatter_info')) {
       $formatters = $cached->data;
     }
     else {
@@ -1623,7 +1623,7 @@ function field_group_formatter_info($display_overview = FALSE) {
       );
       //$formatters['form']['hidden'] = $hidden_region;
       $formatters['display']['hidden'] = $hidden_region;
-      cache_set('field_group_formatter_info', $formatters, 'cache_field');
+      cache('cache_field')->set('field_group_formatter_info', $formatters);
     }
     $cache = $formatters;
   }

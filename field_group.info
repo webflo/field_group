@@ -1,12 +1,6 @@
-name = Fieldgroup
-description = Fieldgroup
-package = Fields
+name = "Fieldgroup"
+description = "Fieldgroup is a module to group entity fields."
+package = "Fields"
+core = "8.x"
 dependencies[] = field
 dependencies[] = ctools
-core = 7.x
-files[] = field_group.install
-files[] = field_group.module
-files[] = field_group.field_ui.inc
-files[] = field_group.form.inc
-files[] = field_group.features.inc
-files[] = field_group.test

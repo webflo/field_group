@@ -29,7 +29,8 @@ Drupal.fieldUIFieldOverview.group = function(row, data) {
 
 Drupal.fieldUIFieldOverview.group.prototype = {
   getRegion: function () {
-    return 'main';
+    console.log('ok');
+    return 'content';
   },
   
   regionChange: function (region, recurse) {
@@ -76,7 +77,7 @@ Drupal.fieldUIDisplayOverview.group = function(row, data) {
 
 Drupal.fieldUIDisplayOverview.group.prototype = {
   getRegion: function () {
-    return (this.$formatSelect.val() == 'hidden') ? 'hidden' : 'visible';
+    return (this.$formatSelect.val() == 'hidden') ? 'hidden' : 'content';
   },
 
   regionChange: function (region, recurse) {
@@ -88,7 +89,7 @@ Drupal.fieldUIDisplayOverview.group.prototype = {
     // the new region.
     var currentValue = this.$formatSelect.val();
     switch (region) {
-      case 'visible':
+      case 'content':
         if (currentValue == 'hidden') {
           // Restore the group format back to 'fieldset'.
           var value = 'fieldset';

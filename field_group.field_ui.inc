@@ -482,10 +482,6 @@ function field_group_formatter_settings_update(& $group, $settings) {
     $group->format_type = $settings['format']['type'];
     $group->label = $settings['format_settings']['settings']['label'];
     $group->format_settings = $settings['format_settings']['settings'];
-    // This is avoided now, cause of the form_state['field_group']
-    // ctools_include('export');
-    // ctools_export_crud_save('field_group', $group);
-    // cache_clear_all('field_groups', 'cache_field');
   }
 }
 
@@ -511,14 +507,14 @@ function field_group_format_settings_summary($group_name, $group) {
 function field_group_field_overview_row_region($row) {
   switch ($row['#row_type']) {
     case 'group':
-      return 'main';
+      return 'content';
     case 'add_new_group':
       // If no input in 'label', assume the row has not been dragged out of the
       // 'add new' section.
       if (empty($row['label']['#value'])) {
         return 'add_new';
       }
-      return 'main';
+      return 'content';
   }
 }
 
@@ -530,14 +526,14 @@ function field_group_field_overview_row_region($row) {
 function field_group_display_overview_row_region($row) {
   switch ($row['#row_type']) {
     case 'group':
-      return ($row['format']['type']['#value'] == 'hidden' ? 'hidden' : 'visible');
+      return ($row['format']['type']['#value'] == 'hidden' ? 'hidden' : 'content');
     case 'add_new_group':
       // If no input in 'label', assume the row has not been dragged out of the
       // 'add new' section.
       if (empty($row['label']['#value'])) {
         return 'add_new';
       }
-      return ($row['format']['type']['#value'] == 'hidden' ? 'hidden' : 'visible');
+      return ($row['format']['type']['#value'] == 'hidden' ? 'hidden' : 'content');
   }
 }
 
@@ -679,7 +675,7 @@ function field_group_field_overview_submit($form, &$form_state) {
     ctools_export_crud_save('field_group', $group);
   }
 
-  cache_clear_all('field_groups', 'cache_field');
+  cache('cache_field')->delete('field_groups');
 }
 
 /**
