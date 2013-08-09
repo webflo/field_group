@@ -1,0 +1,9 @@
+name: Fieldgroup
+type: module
+description: 'Fieldgroup is a module to group entity fields.'
+package: Custom
+version: 8.x-1.x
+core: 8.x
+dependencies:
+  - field
+  - field_ui

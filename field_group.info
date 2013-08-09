@@ -1,6 +1,0 @@
-name = "Fieldgroup"
-description = "Fieldgroup is a module to group entity fields."
-package = "Fields"
-core = "8.x"
-dependencies[] = field
-dependencies[] = ctools
