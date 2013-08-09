@@ -124,9 +124,9 @@ class FieldGroup {
 
 
   public function getFieldgroupInstance($keys = array()) {
-
     $groups = array();
     foreach($keys as $delta => $name) {
+      $id = 'field_group.' . $this->entity_type . '.' . $this->bundle . '.' . $this->mode . '.' . $name;
       $groups[$name] = array(
         '#attributes' => array(
           'class' => array(
@@ -190,7 +190,23 @@ class FieldGroup {
         ),
         'widget_type' => array(
           // TODO: This should be dynamically.
-          '#markup' => 'Selected type',
+          '#type' => 'select',
+          '#title' => 'Widget for new field group',
+          '#title_display' => 'invisible',
+          '#default_value' => config($id)->get('widget_type'),
+          '#options' => field_group_widget_options(),
+          // TODO: Check how to make this translatable.
+          '#empty_option' => '- Select a field group type -',
+          '#description' => 'Form element to edit the data.',
+          '#attributes' => array(
+            'class' => array(
+              'widget-type-select',
+            ),
+          ),
+          '#cell_attributes' => array(
+            'colspan' => 3,
+          ),
+          '#prefix' => '<div class="add-new-placeholder"> </div>',
         ),
         'operations' => array(
           '#markup' => '',

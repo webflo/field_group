@@ -39,43 +39,67 @@ function field_group_save_field_groups(EntityInterface $field_group) {
 
 // HOOK INTO MANAGE DISPLAY
 function field_group_form_field_ui_display_overview_form_alter(&$form, &$form_state, $form_id) {
-
-  $entity_type = $form['#entity_type'];
-  $bundle = $form['#bundle'];
-  $view_mode = isset($form['#view_mode']) ? $form['#view_mode'] : 'form';
-
-  $entity_display = entity_get_display($entity_type, $bundle, $view_mode);
-  dsm($entity_display->getComponent('field_image'));
+  $storage_controller = Drupal::entityManager()->getStorageController('field_group');
+  $field_group_field_ui = new FieldGroupFieldUi($storage_controller);
+  $field_group_field_ui->setFormData($form, $form_state, $form_id);
 
 
-  $draggable_fields = array_merge($form['#fields'], $form['#extra']);
+  $field_group = new FieldGroup($form, $form_state, $form_id);
+  $existing_field_groups = $field_group->getFieldGroups();
 
-  // TODO: We should add the fields to the entity form display.
-  $form['fields'] += field_group_dummy_groups();
-
-
-  $group = config('field_group.' . $entity_type . '.' . $bundle . '.' . $view_mode);
-  $field_groups = $group->get('field_groups');
-  $field_group_storage = $group->get('field_order');
-
-  foreach($field_group_storage as $field_name => $field_parent) {
-    $form['fields'][$field_name]['parent_wrapper']['parent']['#value'] = $field_parent;
-  }
-
-  // TODO: Nested Groups.
-  $draggable_fields = array_merge($draggable_fields, array('new_group2' => 'field_group-group2', 'new_group' => 'field_group-group1'));
-  foreach($draggable_fields as $field_name) {
-    if(isset($form['fields'][$field_name])) {
-      $options = array('new_group2' => 'field_group-group2', 'new_group' => 'field_group-group1');
-      $form['fields'][$field_name]['parent_wrapper']['parent']['#options'] += $options;
-    }
-  }
 
   $add_group = new FieldGroupAddGroup();
   $form['fields']['_add_new_field_group'] = $add_group->field_group_add_group();
 
+
+  $machine_names = $field_group_field_ui->getMachineNames();
+  $draggable_fields = $field_group_field_ui->getDraggableFields();
+
+
+  foreach($field_group->getFieldgroupInstance($machine_names) as $group_name => $group) {
+    $form['fields'][$group_name] = $group;
+  }
+
+
+
+  // // ADD PARENT PARAMETERS
+    // dsm($existing_field_groups);
+  foreach($existing_field_groups as $id => $id) {
+    // TODO: Set parent, but we have to save them first!
+    // $field_parent = config('field_group.' . $id)->get('parent');
+    $field_parent = config('field_group.' . $id)->get('machine_name');
+    $fields = config('field_group.' . $id)->get('fields');
+    foreach ($fields as $field_name => $field_name) {
+      // dsm($field_name . ':' . $field_parent);
+      $form['fields'][$field_name]['parent_wrapper']['parent']['#value'] = $field_parent;
+    }
+    // dsm($field_name);
+    // dsm($field_parent);
+    // $form['fields'][$field_name]['parent_wrapper']['parent']['#value'] = $field_parent;
+  }
+  // $form['fields']['field_group_test']['parent_wrapper']['parent']['#value'] = 'field_group_test_group';
+  // dsm($form['fields']);
+
+  $options = array();
+  $option = $field_group->getFieldgroupInstance($machine_names);
+  $option = (array) array_keys($option);
+  foreach($option as $delta => $key) {
+    $options[$key] = $key;
+  }
+  $options['_add_new_field_group'] = '_add_new_field_group';
+
+  foreach($draggable_fields as $field_name) {
+    if(isset($form['fields'][$field_name])) {
+      $form['fields'][$field_name]['parent_wrapper']['parent']['#options'] = $options;
+    }
+  }
+  // dsm($form);
+
+  //$field_group_ui = new FieldGroupFieldUi($form, $form_state, $form_id);
+
   $form['#validate'][] = 'field_group_overview_validate';
-  $form['#submit'][] = 'field_group_overview_submit';
+  $form['#submit'][] = array($field_group_field_ui, 'submitForm');
+  // dsm($form);
 }
 
 // HOOK INTO MANAGE FIELDS
@@ -286,5 +310,19 @@ function field_group_build_pre_render($build) {
 }
 
 
+
+
+function field_group_widget_options() {
+  $widget_options = array();
+
+  $widgets = drupal_container()->get('plugin.manager.field_group')->getDefinitions();
+  foreach($widgets as $widget_name => $widget) {
+    $field_type = key(array_flip($widget['field_types']));
+    if($field_type == 'field_group') {
+      $widget_options[$widget_name] = $widget_name;
+    }
+  }
+  return $widget_options;
+}
 
 
