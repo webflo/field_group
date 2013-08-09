@@ -1,0 +1,4 @@
+services:
+  plugin.manager.field_group:
+    class: Drupal\field_group\Plugin\FieldGroupPluginManager
+    arguments: ['@container.namespaces']

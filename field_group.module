@@ -6,6 +6,7 @@
  */
 
 use Drupal\Component\Uuid\Uuid;
+use Drupal\field_group\FieldGroup;
 
 // TODO: Save groups per entity
 function field_group_save_field_groups(EntityInterface $field_group) {
