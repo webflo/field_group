@@ -4,3 +4,11 @@
  * @file
  * Fieldgroup module.
  */
+
+use Drupal\Component\Uuid\Uuid;
+
+// TODO: Save groups per entity
+function field_group_save_field_groups(EntityInterface $field_group) {
+  $entity = entity_create('field_group', $field_group);
+  $entity->save();
+}
