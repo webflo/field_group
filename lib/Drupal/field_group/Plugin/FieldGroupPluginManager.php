@@ -11,7 +11,7 @@ use Drupal\Component\Plugin\PluginManagerBase;
 use Drupal\Core\Plugin\Discovery\AnnotatedClassDiscovery;
 
 class FieldGroupPluginManager extends PluginManagerBase {
-  
+
   /**
    * Overrides Drupal\Component\Plugin\PluginManagerBase:$defaults.
    */
@@ -28,7 +28,7 @@ class FieldGroupPluginManager extends PluginManagerBase {
    */
   public function __construct(\Traversable $namespaces) {
     // This is the essential line you have to use in your manager.
-    $this->discovery = new AnnotatedClassDiscovery('field_group', $namespaces);
+    $this->discovery = new AnnotatedClassDiscovery('Plugin/field_group', $namespaces);
     // Every other line is a good practice.
     // $this->discovery = new ProcessDecorator($this->discovery, array($this, 'processDefinition'));
     // $this->discovery = new AlterDecorator($this->discovery, 'field_formatter_info');

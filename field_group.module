@@ -20,7 +20,12 @@ use Drupal\Core\Entity\EntityManager;
 
 
 function field_group_form_alter(&$form, &$form_state, $form_id) {
+  // dpm($form['fields']['field_test']['#region_callback']);
+  // dvm($form['fields']['_add_new_field']);
   // dsm(get_defined_vars());
+  // $form['fields']['#regions']['content']['rows_order'][] = '_add_new_field_group';
+  // $form['fields']['_add_new_field_group'] = $form['fields']['_add_new_field'];
+  // dsm($form);
 }
 
 // TODO: Save groups per entity
@@ -96,15 +101,19 @@ function field_group_form_field_ui_display_overview_form_alter(&$form, &$form_st
   // dsm($form);
 
   //$field_group_ui = new FieldGroupFieldUi($form, $form_state, $form_id);
+  // FOO THATS NEW.
+  $form['fields']['#regions']['hidden']['rows_order'][] = '_add_new_field_group';
+
 
   $form['#validate'][] = 'field_group_overview_validate';
   $form['#submit'][] = array($field_group_field_ui, 'submitForm');
-  // dsm($form);
+  dsm($form);
 }
 
-// HOOK INTO MANAGE FIELDS
-function field_group_form_field_ui_field_overview_form_alter(&$form, &$form_state, $form_id) {
-
+// HOOK INTO MANAGE FORM DISPLAY
+// field_ui_form_display_overview_form
+function field_group_form_field_ui_form_display_overview_form_alter(&$form, &$form_state, $form_id) {
+  // dsm($form);
   $storage_controller = Drupal::entityManager()->getStorageController('field_group');
   $field_group_field_ui = new FieldGroupFieldUi($storage_controller);
   $field_group_field_ui->setFormData($form, $form_state, $form_id);
@@ -163,9 +172,12 @@ function field_group_form_field_ui_field_overview_form_alter(&$form, &$form_stat
 
   //$field_group_ui = new FieldGroupFieldUi($form, $form_state, $form_id);
 
+  // FOO THATS NEW.
+  $form['fields']['#regions']['hidden']['rows_order'][] = '_add_new_field_group';
+
   $form['#validate'][] = 'field_group_overview_validate';
   $form['#submit'][] = array($field_group_field_ui, 'submitForm');
-  // dsm($form);
+  dsm($form);
 }
 
 
@@ -198,6 +210,7 @@ function field_group_overview_validate($form, &$form_state) {
 
 
 function field_group_field_overview_row_region($row) {
+  dsm($row['#row_type']);
   switch ($row['#row_type']) {
     case 'field_group':
       return 'content';

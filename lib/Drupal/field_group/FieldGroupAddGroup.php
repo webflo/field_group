@@ -6,10 +6,19 @@
 
 namespace Drupal\field_group;
 
+use Drupal\field_group\FieldGroup;
+
 /**
  * Provides an interface defining a field_group data object.
  */
 class FieldGroupAddGroup {
+
+  public function getRowRegion($row) {
+    switch ($row['#row_type']) {
+      case 'add_new_field':
+        return 'hidden';
+    }
+  }
 
 	public function field_group_add_group() {
     $name = '_add_new_field_group';
@@ -23,7 +32,7 @@ class FieldGroupAddGroup {
 		    ),
 		  ),
 		  '#row_type' => 'add_new_field',
-		  '#region_callback' => 'field_ui_field_overview_row_region',
+		  '#region_callback' => array($this, 'getRowRegion'),
 		  'label' => array(
 		    '#type' => 'textfield',
 		    '#title' => 'New field label',
@@ -125,8 +134,9 @@ class FieldGroupAddGroup {
 
 	private function field_group_widget_options() {
 	  $widget_options = array();
-
-	  $widgets = drupal_container()->get('plugin.manager.field_group')->getDefinitions();
+	  $widgets = \Drupal::service('plugin.manager.field_group')->getDefinitions();
+    // dsm($widgets);
+    // dsm(\Drupal::service('plugin.manager.field_group')->getDefinitions());
 	  foreach($widgets as $widget_name => $widget) {
 	    $field_type = key(array_flip($widget['field_types']));
 	    if($field_type == 'field_group') {

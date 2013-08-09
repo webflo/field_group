@@ -50,8 +50,10 @@ class FieldGroupFieldUi {
     // Save existing field_groups.
     foreach ($save_to_field_group as $field_group_id => $value) {
       $id = $this->getEntityType() . '.' . $this->getBundle() . '.' . $this->getMode() . '.' . $field_group_id;
-      $entity = $this->storageController->load(array($id));
-      $entity = reset($entity);
+      $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
+      $entity = $storage_controller->load($id);
+      dsm($entity);
+      // $entity = reset($entity);
       $entity->set('parent', $parent);
       $entity->set('fields', $value);
       $entity->set('widget_type', $values[$field_group_id]['widget_type']);
@@ -84,7 +86,8 @@ class FieldGroupFieldUi {
       'label' => 'test',
     );
 
-    $entity = $this->storageController->create($field_group);
+    $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
+    $entity = $storage_controller->create($field_group);
     $entity->save();
   }
 
@@ -99,16 +102,21 @@ class FieldGroupFieldUi {
   }
 
   public function getFieldGroups() {
-    return \Drupal::entityQuery('field_group')
+    $field_groups = \Drupal::entityQuery('field_group')
                    ->condition('entity_type', $this->getEntityType())
                    ->condition('bundle', $this->getBundle())
                    ->condition('mode', $this->getMode())
                    ->execute();
+   return !empty($field_groups) ? $field_groups : array();
   }
 
   public function getMachineNames() {
     $machine_names = array();
-    foreach($this->storageController->load($this->getFieldGroups()) as $entity) {
+    $field_groups = $this->getFieldGroups();
+
+    $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
+    $field_groups = isset($field_groups) ? $storage_controller->loadMultiple($field_groups) : array();
+    foreach($field_groups as $entity) {
       $machine_name = $entity->machine_name;
       $machine_names[$machine_name] = $machine_name;
     }
