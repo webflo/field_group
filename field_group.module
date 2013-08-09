@@ -1,15 +1,290 @@
 <?php
-
 /**
  * @file
- * Fieldgroup module.
+ * Allows administrators to attach custom fields to fieldable types.
  */
 
+// namespace Drupal\field_group;
+// use Drupal\field_group\Plugin\Core\Entity;
 use Drupal\Component\Uuid\Uuid;
+// use Drupal\field_group\Plugin\field\widget\TestWidget;
+// use Drupal\field_group\Plugin\Core\Entity\FieldGroup;
 use Drupal\field_group\FieldGroup;
+// use Drupal\field_group\Plugin\field_group\Div;
+use Drupal\field_group\FieldGroupAddGroup;
+use Drupal\field_group\FieldGroupFieldUi;
+
+// use Drupal\field_group\Plugin\FieldGroupPluginManager;
+
+use Drupal\Core\Entity\EntityManager;
+
+
+function field_group_form_alter(&$form, &$form_state, $form_id) {
+  // dsm(get_defined_vars());
+}
 
 // TODO: Save groups per entity
 function field_group_save_field_groups(EntityInterface $field_group) {
   $entity = entity_create('field_group', $field_group);
   $entity->save();
 }
+
+
+// function field_group_field_attach_form(EntityInterface $entity, &$form, &$form_state, $lancode) {
+//   dsm($entity);
+// }
+
+// TODO: Save each field group in it's own config entity -> NOT
+// Catch fieldgroups how?
+
+// HOOK INTO MANAGE DISPLAY
+function field_group_form_field_ui_display_overview_form_alter(&$form, &$form_state, $form_id) {
+
+  $entity_type = $form['#entity_type'];
+  $bundle = $form['#bundle'];
+  $view_mode = isset($form['#view_mode']) ? $form['#view_mode'] : 'form';
+
+  $entity_display = entity_get_display($entity_type, $bundle, $view_mode);
+  dsm($entity_display->getComponent('field_image'));
+
+
+  $draggable_fields = array_merge($form['#fields'], $form['#extra']);
+
+  // TODO: We should add the fields to the entity form display.
+  $form['fields'] += field_group_dummy_groups();
+
+
+  $group = config('field_group.' . $entity_type . '.' . $bundle . '.' . $view_mode);
+  $field_groups = $group->get('field_groups');
+  $field_group_storage = $group->get('field_order');
+
+  foreach($field_group_storage as $field_name => $field_parent) {
+    $form['fields'][$field_name]['parent_wrapper']['parent']['#value'] = $field_parent;
+  }
+
+  // TODO: Nested Groups.
+  $draggable_fields = array_merge($draggable_fields, array('new_group2' => 'field_group-group2', 'new_group' => 'field_group-group1'));
+  foreach($draggable_fields as $field_name) {
+    if(isset($form['fields'][$field_name])) {
+      $options = array('new_group2' => 'field_group-group2', 'new_group' => 'field_group-group1');
+      $form['fields'][$field_name]['parent_wrapper']['parent']['#options'] += $options;
+    }
+  }
+
+  $add_group = new FieldGroupAddGroup();
+  $form['fields']['_add_new_field_group'] = $add_group->field_group_add_group();
+
+  $form['#validate'][] = 'field_group_overview_validate';
+  $form['#submit'][] = 'field_group_overview_submit';
+}
+
+// HOOK INTO MANAGE FIELDS
+function field_group_form_field_ui_field_overview_form_alter(&$form, &$form_state, $form_id) {
+
+  $storage_controller = Drupal::entityManager()->getStorageController('field_group');
+  $field_group_field_ui = new FieldGroupFieldUi($storage_controller);
+  $field_group_field_ui->setFormData($form, $form_state, $form_id);
+
+
+  $field_group = new FieldGroup($form, $form_state, $form_id);
+  $existing_field_groups = $field_group->getFieldGroups();
+
+
+  $add_group = new FieldGroupAddGroup();
+  $form['fields']['_add_new_field_group'] = $add_group->field_group_add_group();
+
+
+  $machine_names = $field_group_field_ui->getMachineNames();
+  $draggable_fields = $field_group_field_ui->getDraggableFields();
+
+
+  foreach($field_group->getFieldgroupInstance($machine_names) as $group_name => $group) {
+    $form['fields'][$group_name] = $group;
+  }
+
+
+
+  // // ADD PARENT PARAMETERS
+    // dsm($existing_field_groups);
+  foreach($existing_field_groups as $id => $id) {
+    // TODO: Set parent, but we have to save them first!
+    // $field_parent = config('field_group.' . $id)->get('parent');
+    $field_parent = config('field_group.' . $id)->get('machine_name');
+    $fields = config('field_group.' . $id)->get('fields');
+    foreach ($fields as $field_name => $field_name) {
+      // dsm($field_name . ':' . $field_parent);
+      $form['fields'][$field_name]['parent_wrapper']['parent']['#value'] = $field_parent;
+    }
+    // dsm($field_name);
+    // dsm($field_parent);
+    // $form['fields'][$field_name]['parent_wrapper']['parent']['#value'] = $field_parent;
+  }
+  // $form['fields']['field_group_test']['parent_wrapper']['parent']['#value'] = 'field_group_test_group';
+  // dsm($form['fields']);
+
+  $options = array();
+  $option = $field_group->getFieldgroupInstance($machine_names);
+  $option = (array) array_keys($option);
+  foreach($option as $delta => $key) {
+    $options[$key] = $key;
+  }
+  $options['_add_new_field_group'] = '_add_new_field_group';
+
+  foreach($draggable_fields as $field_name) {
+    if(isset($form['fields'][$field_name])) {
+      $form['fields'][$field_name]['parent_wrapper']['parent']['#options'] = $options;
+    }
+  }
+  // dsm($form);
+
+  //$field_group_ui = new FieldGroupFieldUi($form, $form_state, $form_id);
+
+  $form['#validate'][] = 'field_group_overview_validate';
+  $form['#submit'][] = array($field_group_field_ui, 'submitForm');
+  // dsm($form);
+}
+
+
+/**
+ * Render API callback: Checks if a field machine name is taken.
+ *
+ * @param $value
+ *   The machine name, not prefixed with 'field_'.
+ *
+ * @return
+ *   Whether or not the field machine name is taken.
+ */
+function _field_group_field_name_exists($value) {
+  // Prefix with 'field_'.
+  $field_name = 'field_group_' . $value;
+
+  // We need to check inactive fields as well, so we can't use
+  // field_info_fields().
+  // return (bool) field_read_fields(array('field_name' => $field_name), array('include_inactive' => TRUE));
+  // TODO: This has to be done :)
+  return FALSE;
+}
+
+
+function field_group_overview_validate($form, &$form_state) {
+  // dsm($form_state);
+}
+
+
+
+
+function field_group_field_overview_row_region($row) {
+  switch ($row['#row_type']) {
+    case 'field_group':
+      return 'content';
+    case 'feld_group2':
+  }
+}
+
+
+// TODO: Get groups by entity/bundle/form:display/
+function field_group_get_field_groups($entity_type, $bundle, $view_mode) {
+
+  $id = $entity_type . '.' . $bundle . '.' . $view_mode;
+  if($config = entity_load('field_group', $id)) {
+    $groups = $config->field_groups;
+  }
+  else {
+    $groups = array();
+  }
+  $field_groups = array();
+  // foreach(element_children($groups) as $delta => $group_name) {
+  //   $field_groups[$group_name] = $group_name;
+  // }
+  $field_groups = $groups;
+  return $field_groups;
+}
+
+
+function field_group_get_field_groups_keys($entity_type, $bundle, $view_mode, $filter = FALSE) {
+  $groups = field_group_get_field_groups($entity_type, $bundle, $view_mode);
+  if(isset($filter)) {
+    unset($groups[$filter]);
+  }
+  return $groups;
+}
+
+
+function field_group_field_group_format_settings() {
+  dsm('field_group_field_group_format_settings');
+  dsm(get_defined_vars());
+}
+
+
+function field_group_entity_view(\Drupal\Core\Entity\EntityInterface $entity, \Drupal\entity\Plugin\Core\Entity\EntityDisplay $display, $view_mode, $langcode) {
+  // Only do the extra work if the component is configured to be displayed.
+  // This assumes a 'mymodule_addition' extra field has been defined for the
+  // entity bundle in hook_field_extra_fields().
+  // dsm($display);
+  if ($display->getComponent('mymodule_addition')) {
+    $entity->content['mymodule_addition'] = array(
+      '#markup' => mymodule_addition($entity),
+      '#theme' => 'mymodule_my_additional_field',
+    );
+  }
+}
+
+function field_group_entity_view_alter(&$build, Drupal\Core\Entity\EntityInterface $entity, \Drupal\entity\Plugin\Core\Entity\EntityDisplay $display) {
+
+  // dsm($build['field_tags']['#title'] = 'blubb');
+  field_group_attach_groups($build, $entity, $display);
+
+  // if ($build['#view_mode'] == 'full' && isset($build['an_additional_field'])) {
+
+  // }
+}
+
+
+function field_group_attach_groups(&$build, $entity, $display) {
+  dsm('field_group_attach_groups');
+
+  // dsm($build);
+  // TODO: Add the groups here.
+  $build += field_group_dummy_groups();
+  $build['#pre_render'][] = 'field_group_build_pre_render';
+  // $build['#post_render'][] = 'field_group_build_pre_render';
+}
+
+function field_group_build_pre_render($build) {
+  dsm('field_group_build_pre_render');
+
+  $build['test'] = array(
+    '#type' => 'details',
+    '#title' => t('Menu settings'),
+    '#access' => user_access('administer menu'),
+    '#collapsed' => 'blubb',
+    '#group' => 'advanced',
+    '#attached' => array(
+      'library' => array(array('menu', 'drupal.menu')),
+    ),
+    '#tree' => TRUE,
+    '#weight' => -2,
+    '#attributes' => array('class' => array('menu-link-form')),
+  );
+
+  $build['test']['field_tags'] = $build['field_tags'];
+
+  unset($build['field_tags']);
+
+
+  // ADD PARENT PARAMETERS
+  // $field_group_storage = $_SESSION['field_group'];
+  // foreach($field_group_storage as $field_name => $field_parent) {
+  //   $build[$field_name]['parent_wrapper']['parent']['#value'] = $field_parent;
+  // }
+  // dsm($build);
+
+  // dsm(field_group_get_field_groups());
+
+  // TODO: invoke hook/plugins.
+  return $build;
+}
+
+
+
+
