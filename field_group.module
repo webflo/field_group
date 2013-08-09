@@ -207,11 +207,19 @@ function field_group_field_overview_row_region($row) {
 
 
 // TODO: Get groups by entity/bundle/form:display/
+// TODO: Merge this into field_Group class, this is pretty messy! Shame on me.
 function field_group_get_field_groups($entity_type, $bundle, $view_mode) {
 
   $id = $entity_type . '.' . $bundle . '.' . $view_mode;
-  if($config = entity_load('field_group', $id)) {
-    $groups = $config->field_groups;
+  $field_groups = Drupal::entityQuery('field_group')
+   ->condition('entity_type', $entity_type)
+   ->condition('bundle', $bundle)
+   ->condition('mode', $view_mode)
+   ->execute();
+   // dsm($field_groups);
+
+  if(isset($field_groups)) {
+    $groups = $field_groups;
   }
   else {
     $groups = array();
@@ -240,6 +248,9 @@ function field_group_field_group_format_settings() {
 }
 
 
+
+
+
 function field_group_entity_view(\Drupal\Core\Entity\EntityInterface $entity, \Drupal\entity\Plugin\Core\Entity\EntityDisplay $display, $view_mode, $langcode) {
   // Only do the extra work if the component is configured to be displayed.
   // This assumes a 'mymodule_addition' extra field has been defined for the
@@ -254,28 +265,25 @@ function field_group_entity_view(\Drupal\Core\Entity\EntityInterface $entity, \D
 }
 
 function field_group_entity_view_alter(&$build, Drupal\Core\Entity\EntityInterface $entity, \Drupal\entity\Plugin\Core\Entity\EntityDisplay $display) {
-
-  // dsm($build['field_tags']['#title'] = 'blubb');
+  // Attach groups to entity_view.
   field_group_attach_groups($build, $entity, $display);
-
-  // if ($build['#view_mode'] == 'full' && isset($build['an_additional_field'])) {
-
-  // }
 }
 
 
+// TODO: Put output into fieldgroups here!
 function field_group_attach_groups(&$build, $entity, $display) {
-  dsm('field_group_attach_groups');
-
+  // dsm('field_group_attach_groups');
+  // dvm($display->mode);
+  dsm(field_group_get_field_groups($entity->entityType(), $entity->bundle(), $display->mode));
   // dsm($build);
   // TODO: Add the groups here.
-  $build += field_group_dummy_groups();
+  // $build += field_group_dummy_groups();
   $build['#pre_render'][] = 'field_group_build_pre_render';
   // $build['#post_render'][] = 'field_group_build_pre_render';
 }
 
 function field_group_build_pre_render($build) {
-  dsm('field_group_build_pre_render');
+  // dsm('field_group_build_pre_render');
 
   $build['test'] = array(
     '#type' => 'details',
@@ -310,7 +318,19 @@ function field_group_build_pre_render($build) {
 }
 
 
-
+function field_group_theme() {
+  return array(
+    'field_group_div' => array(
+      'variables' => array(
+        'title' => NULL,
+        'url_title' => NULL,
+        'href' => NULL,
+        'options' => array()
+      ),
+      'template' => 'field-group-div',
+    ),
+  );
+}
 
 function field_group_widget_options() {
   $widget_options = array();
