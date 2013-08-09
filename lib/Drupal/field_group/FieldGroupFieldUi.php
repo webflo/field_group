@@ -54,6 +54,7 @@ class FieldGroupFieldUi {
       $entity = reset($entity);
       $entity->set('parent', $parent);
       $entity->set('fields', $value);
+      $entity->set('widget_type', $values[$field_group_id]['widget_type']);
       $entity->save($entity);
     }
 
