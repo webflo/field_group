@@ -14,6 +14,8 @@ use Drupal\field_group\FieldGroup;
 use Drupal\field_group\FieldGroupAddGroup;
 use Drupal\field_group\FieldGroupFieldUi;
 
+use Drupal\Core\Template\Attribute;
+
 // use Drupal\field_group\Plugin\FieldGroupPluginManager;
 
 use Drupal\Core\Entity\EntityManager;
@@ -210,7 +212,7 @@ function field_group_overview_validate($form, &$form_state) {
 
 
 function field_group_field_overview_row_region($row) {
-  dsm($row['#row_type']);
+  // dsm($row['#row_type']);
   switch ($row['#row_type']) {
     case 'field_group':
       return 'content';
@@ -280,42 +282,106 @@ function field_group_entity_view(\Drupal\Core\Entity\EntityInterface $entity, \D
 function field_group_entity_view_alter(&$build, Drupal\Core\Entity\EntityInterface $entity, \Drupal\entity\Plugin\Core\Entity\EntityDisplay $display) {
   // Attach groups to entity_view.
   field_group_attach_groups($build, $entity, $display);
-}
+  // dsm($build);
 
+
+  // dsm($entity);
+  // dsm($display);
+}
 
 // TODO: Put output into fieldgroups here!
 function field_group_attach_groups(&$build, $entity, $display) {
   // dsm('field_group_attach_groups');
   // dvm($display->mode);
-  dsm(field_group_get_field_groups($entity->entityType(), $entity->bundle(), $display->mode));
+  // dsm(field_group_get_field_groups($entity->entityType(), $entity->bundle(), $display->mode));
+  // dsm($build);
+
+  // TODO: This should be the right view mode ;)
+  $form = array(
+    '#view_mode' => $display->mode,
+    '#view_mode' => 'form',
+    '#bundle' => $display->bundle,
+    '#entity_type' => $display->targetEntityType
+  );
+  // dsm($form);
+  $form_state = array();
+  $form_id = '';
+  $field_group = new FieldGroup($form, $form_state, $form_id);
+  $existing_field_groups = $field_group->getFieldGroups();
+  // dsm(config(reset($existing_field_groups)));
+  $instances = $field_group->getFieldgroupInstance($existing_field_groups);
+
+
+// $build['field_asdfgh']['#theme_wrappers'] = array('field_group__div');
+// $build['field_tags']['#theme_wrappers'] = array('field_group__div');
+// $build['field_test']['#theme_wrappers'] = array('field_group__div');
+  // dsm($build);
+if(isset($build['field_tags']) ) {
+  $build['group_test'] = array(
+    '#children' => array(
+      $build['field_tags'],
+      $build['field_test']
+    ),
+    '#theme_wrappers' => array('field_group__div')
+  );
+  unset($build['field_tags']);
+  unset($build['field_test']);
+}
+// $build['body']['#theme_wrappers'] = array('field_group__div');
+
+  // dsm($build);
+  // $build += $instances;
+
+  // $build['test'] = array(
+  //   '#type' => 'details',
+  //   '#title' => t('Menu settings'),
+  //   '#access' => user_access('administer menu'),
+  //   '#collapsed' => 'blubb',
+  //   '#group' => 'advanced',
+  //   '#attached' => array(
+  //     'library' => array(array('menu', 'drupal.menu')),
+  //   ),
+  //   '#tree' => TRUE,
+  //   '#weight' => -2,
+  //   '#attributes' => array('class' => array('menu-link-form')),
+  // );
+
   // dsm($build);
   // TODO: Add the groups here.
   // $build += field_group_dummy_groups();
-  $build['#pre_render'][] = 'field_group_build_pre_render';
-  // $build['#post_render'][] = 'field_group_build_pre_render';
+  // $build['#pre_render'][] = 'field_group_build_pre_render';
+  // $build['#post_render'][] = 'field_group_build_post_render';
+}
+
+function field_group_build_post_render($build) {
+  // dsm($build);
+
+  return $build;
 }
 
 function field_group_build_pre_render($build) {
   // dsm('field_group_build_pre_render');
 
-  $build['test'] = array(
-    '#type' => 'details',
-    '#title' => t('Menu settings'),
-    '#access' => user_access('administer menu'),
-    '#collapsed' => 'blubb',
-    '#group' => 'advanced',
-    '#attached' => array(
-      'library' => array(array('menu', 'drupal.menu')),
-    ),
-    '#tree' => TRUE,
-    '#weight' => -2,
-    '#attributes' => array('class' => array('menu-link-form')),
-  );
+  // $build['test'] = array(
+  //   '#type' => 'details',
+  //   '#title' => t('Menu settings'),
+  //   '#access' => user_access('administer menu'),
+  //   '#collapsed' => 'blubb',
+  //   '#group' => 'advanced',
+  //   '#attached' => array(
+  //     'library' => array(array('menu', 'drupal.menu')),
+  //   ),
+  //   '#tree' => TRUE,
+  //   '#weight' => -2,
+  //   '#attributes' => array('class' => array('menu-link-form')),
+  // );
 
-  $build['test']['field_tags'] = $build['field_tags'];
+  // $build['test']['field_tags'] = $build['field_tags'];
 
-  unset($build['field_tags']);
+  // unset($build['field_tags']);
 
+  // dsm(theme('field_group__div', array('content' => $build['field_tags'],)));
+  // $build['field_tags'] = theme('field_group__div', array('content' => $build['field_tags'],));
 
   // ADD PARENT PARAMETERS
   // $field_group_storage = $_SESSION['field_group'];
@@ -330,17 +396,36 @@ function field_group_build_pre_render($build) {
   return $build;
 }
 
+function template_preprocess_field_group__div(&$variables) {
+  $variables['elements'] = $variables['element']['#children'];
+  dsm($variables);
+}
+// function theme_field_group__div($variables) {
+//   $element = $variables['element'];
+//   dsm($variables);
+
+//   // Special handling for form elements.
+//   if (isset($element['#array_parents'])) {
+//     // Assign an html ID.
+//     if (!isset($element['#attributes']['id'])) {
+//       $element['#attributes']['id'] = $element['#id'];
+//     }
+//     // Add the 'form-wrapper' class.
+//     $element['#attributes']['class'][] = 'form-wrapper';
+//   }
+
+//   return '<fieldset' . new Attribute($element['#attributes']) . '>' . $element['#children'] . '</fieldset>';
+// }
 
 function field_group_theme() {
   return array(
-    'field_group_div' => array(
-      'variables' => array(
-        'title' => NULL,
-        'url_title' => NULL,
-        'href' => NULL,
-        'options' => array()
-      ),
-      'template' => 'field-group-div',
+    'field_group__div' => array(
+      // 'variables' => array(
+      //   'element' => NULL,
+      //   'attributes' => NULL,
+      // ),
+      'render element' => 'element',
+      'template' => 'field-group--div',
     ),
   );
 }
