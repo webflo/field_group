@@ -13,12 +13,10 @@
  * @ingroup themeable
  */
 #}
-TEST.anfang
-<div id="YEAH">
+<fieldset>
   {% for children in elements %}
     <div{{ children.attributes }}>
       {{ children }}
     </div>
   {% endfor %}
-</div>
-TEST.ende
+</fieldset>

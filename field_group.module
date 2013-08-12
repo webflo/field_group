@@ -309,24 +309,41 @@ function field_group_attach_groups(&$build, $entity, $display) {
   $field_group = new FieldGroup($form, $form_state, $form_id);
   $existing_field_groups = $field_group->getFieldGroups();
   // dsm(config(reset($existing_field_groups)));
-  $instances = $field_group->getFieldgroupInstance($existing_field_groups);
+
+  // WRAP FIELDS INTO FIELDGROUPS!!
+  foreach ($existing_field_groups as $key => $key) {
+    $widget_type = config('field_group.' . $key)->get('widget_type');
+    $fields = config('field_group.' . $key)->get('fields');
+    $machine_name = config('field_group.' . $key)->get('machine_name');
+    $children = array();
+    foreach ($fields as $field_name => $field_name) {
+      if(isset($build[$field_name])) {
+        $children[$field_name] = $build[$field_name];
+        unset($build[$field_name]);
+      }
+    }
+    $build[$machine_name] = array(
+      '#children' => $children,
+      '#theme_wrappers' => array('field_group__' . $widget_type),
+    );
+  }
 
 
 // $build['field_asdfgh']['#theme_wrappers'] = array('field_group__div');
 // $build['field_tags']['#theme_wrappers'] = array('field_group__div');
 // $build['field_test']['#theme_wrappers'] = array('field_group__div');
   // dsm($build);
-if(isset($build['field_tags']) ) {
-  $build['group_test'] = array(
-    '#children' => array(
-      $build['field_tags'],
-      $build['field_test']
-    ),
-    '#theme_wrappers' => array('field_group__div')
-  );
-  unset($build['field_tags']);
-  unset($build['field_test']);
-}
+// if(isset($build['field_tags']) ) {
+//   $build['group_test'] = array(
+//     '#children' => array(
+//       $build['field_tags'],
+//       $build['field_test']
+//     ),
+//     '#theme_wrappers' => array('field_group__div')
+//   );
+//   unset($build['field_tags']);
+//   unset($build['field_test']);
+// }
 // $build['body']['#theme_wrappers'] = array('field_group__div');
 
   // dsm($build);
@@ -398,7 +415,11 @@ function field_group_build_pre_render($build) {
 
 function template_preprocess_field_group__div(&$variables) {
   $variables['elements'] = $variables['element']['#children'];
-  dsm($variables);
+  // dsm($variables);
+}
+function template_preprocess_field_group__fieldset(&$variables) {
+  $variables['elements'] = $variables['element']['#children'];
+  // dsm($variables);
 }
 // function theme_field_group__div($variables) {
 //   $element = $variables['element'];
@@ -426,6 +447,14 @@ function field_group_theme() {
       // ),
       'render element' => 'element',
       'template' => 'field-group--div',
+    ),
+    'field_group__fieldset' => array(
+      // 'variables' => array(
+      //   'element' => NULL,
+      //   'attributes' => NULL,
+      // ),
+      'render element' => 'element',
+      'template' => 'field-group--fieldset',
     ),
   );
 }
