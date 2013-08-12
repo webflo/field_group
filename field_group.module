@@ -129,7 +129,7 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
   $form['fields']['#regions']['hidden']['rows_order'][] = '_add_new_field_group';
 
 
-  $form['#validate'][] = 'field_group_overview_validate';
+  // $form['#validate'][] = 'field_group_overview_validate';
   $form['#submit'][] = array($field_group_field_ui, 'submitForm');
   // dsm($form);
 }
@@ -151,11 +151,11 @@ function _field_group_field_name_exists($value) {
   $exists = Drupal::entityQuery('field_group')
    ->condition('machine_name', $value)
    ->execute();
-
-  if(isset($exists) && !empty($exists)) {
-    return FALSE;
+   // TODO: This is not working yet.
+  if(!empty($exists)) {
+    return TRUE;
   }
-  return TRUE;
+  return FALSE;
 }
 
 
@@ -268,10 +268,12 @@ function field_group_attach_groups(&$build, $entity, $display) {
       '#type' => 'field_group',
       '#widget' => $widget_type,
     );
-    foreach ($fields as $field_name => $field_name) {
-      if(isset($build[$field_name])) {
-        $build[$machine_name][$field_name] = $build[$field_name];
-        unset($build[$field_name]);
+    if(!empty($fields)) {
+      foreach ($fields as $field_name => $field_name) {
+        if(isset($build[$field_name])) {
+          $build[$machine_name][$field_name] = $build[$field_name];
+          unset($build[$field_name]);
+        }
       }
     }
 
@@ -288,9 +290,10 @@ function template_preprocess_field_group__fieldset(&$variables) {
 
 function theme_field_group(&$variables) {
   $element = $variables['element'];
-  return theme('field_group__' . $element['#widget'], $variables + array(
+  $variables += array(
     'children' => $element['#children']
-  ));
+  );
+  return theme('field_group__' . $element['#widget'], $variables);
 }
 
 function field_group_theme() {

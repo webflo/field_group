@@ -32,6 +32,7 @@ class FieldGroupFieldUi {
 
     // dsm($form_state);
 
+    // TODO: SAVE EMPTY FIELD GROUPS.
     $save_to_field_group = array();
     // TODO: Save field group changes on existing ones.
     foreach ($this->getDraggableFields() as $key => $field_name) {
@@ -41,6 +42,7 @@ class FieldGroupFieldUi {
         $save_to_field_group[$parent][$field_name] = $field_name;
       }
     }
+
 
     // If _add_new_field_group is used.
     if(!empty($values['_add_new_field_group']['field_name'])) {
