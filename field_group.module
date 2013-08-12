@@ -21,20 +21,20 @@ use Drupal\Core\Template\Attribute;
 use Drupal\Core\Entity\EntityManager;
 
 
-function field_group_form_alter(&$form, &$form_state, $form_id) {
-  // dpm($form['fields']['field_test']['#region_callback']);
-  // dvm($form['fields']['_add_new_field']);
-  // dsm(get_defined_vars());
-  // $form['fields']['#regions']['content']['rows_order'][] = '_add_new_field_group';
-  // $form['fields']['_add_new_field_group'] = $form['fields']['_add_new_field'];
-  // dsm($form);
-}
+// function field_group_form_alter(&$form, &$form_state, $form_id) {
+//   // dpm($form['fields']['field_test']['#region_callback']);
+//   // dvm($form['fields']['_add_new_field']);
+//   // dsm(get_defined_vars());
+//   // $form['fields']['#regions']['content']['rows_order'][] = '_add_new_field_group';
+//   // $form['fields']['_add_new_field_group'] = $form['fields']['_add_new_field'];
+//   // dsm($form);
+// }
 
 // TODO: Save groups per entity
-function field_group_save_field_groups(EntityInterface $field_group) {
-  $entity = entity_create('field_group', $field_group);
-  $entity->save();
-}
+// function field_group_save_field_groups(EntityInterface $field_group) {
+//   $entity = entity_create('field_group', $field_group);
+//   $entity->save();
+// }
 
 
 // function field_group_field_attach_form(EntityInterface $entity, &$form, &$form_state, $lancode) {
@@ -44,82 +44,32 @@ function field_group_save_field_groups(EntityInterface $field_group) {
 // TODO: Save each field group in it's own config entity -> NOT
 // Catch fieldgroups how?
 
-// HOOK INTO MANAGE DISPLAY
+
+
+// MANAGE DISPLAY: field_ui_display_overview_form
 function field_group_form_field_ui_display_overview_form_alter(&$form, &$form_state, $form_id) {
-  $storage_controller = Drupal::entityManager()->getStorageController('field_group');
-  $field_group_field_ui = new FieldGroupFieldUi($storage_controller);
-  $field_group_field_ui->setFormData($form, $form_state, $form_id);
-
-
-  $field_group = new FieldGroup($form, $form_state, $form_id);
-  $existing_field_groups = $field_group->getFieldGroups();
-
-
-  $add_group = new FieldGroupAddGroup();
-  $form['fields']['_add_new_field_group'] = $add_group->field_group_add_group();
-
-
-  $machine_names = $field_group_field_ui->getMachineNames();
-  $draggable_fields = $field_group_field_ui->getDraggableFields();
-
-
-  foreach($field_group->getFieldgroupInstance($machine_names) as $group_name => $group) {
-    $form['fields'][$group_name] = $group;
-  }
-
-
-
-  // // ADD PARENT PARAMETERS
-    // dsm($existing_field_groups);
-  foreach($existing_field_groups as $id => $id) {
-    // TODO: Set parent, but we have to save them first!
-    // $field_parent = config('field_group.' . $id)->get('parent');
-    $field_parent = config('field_group.' . $id)->get('machine_name');
-    $fields = config('field_group.' . $id)->get('fields');
-    foreach ($fields as $field_name => $field_name) {
-      // dsm($field_name . ':' . $field_parent);
-      $form['fields'][$field_name]['parent_wrapper']['parent']['#value'] = $field_parent;
-    }
-    // dsm($field_name);
-    // dsm($field_parent);
-    // $form['fields'][$field_name]['parent_wrapper']['parent']['#value'] = $field_parent;
-  }
-  // $form['fields']['field_group_test']['parent_wrapper']['parent']['#value'] = 'field_group_test_group';
-  // dsm($form['fields']);
-
-  $options = array();
-  $option = $field_group->getFieldgroupInstance($machine_names);
-  $option = (array) array_keys($option);
-  foreach($option as $delta => $key) {
-    $options[$key] = $key;
-  }
-  $options['_add_new_field_group'] = '_add_new_field_group';
-
-  foreach($draggable_fields as $field_name) {
-    if(isset($form['fields'][$field_name])) {
-      $form['fields'][$field_name]['parent_wrapper']['parent']['#options'] = $options;
-    }
-  }
-  // dsm($form);
-
-  //$field_group_ui = new FieldGroupFieldUi($form, $form_state, $form_id);
-  // FOO THATS NEW.
-  $form['fields']['#regions']['hidden']['rows_order'][] = '_add_new_field_group';
-
-
-  $form['#validate'][] = 'field_group_overview_validate';
-  $form['#submit'][] = array($field_group_field_ui, 'submitForm');
-  dsm($form);
+  field_group_admin_form($form, $form_state, $form_id);
+}
+// FORM MANAGE DISPLAY: field_ui_form_display_overview_form
+function field_group_form_field_ui_form_display_overview_form_alter(&$form, &$form_state, $form_id) {
+  field_group_admin_form($form, $form_state, $form_id);
 }
 
-// HOOK INTO MANAGE FORM DISPLAY
-// field_ui_form_display_overview_form
-function field_group_form_field_ui_form_display_overview_form_alter(&$form, &$form_state, $form_id) {
-  // dsm($form);
+function field_group_admin_form(&$form, &$form_state, $form_id) {
   $storage_controller = Drupal::entityManager()->getStorageController('field_group');
   $field_group_field_ui = new FieldGroupFieldUi($storage_controller);
-  $field_group_field_ui->setFormData($form, $form_state, $form_id);
 
+  // We need to make a diffrence between form displays and normal displays.
+  if ($form_id == 'field_ui_display_overview_form') {
+    $type = 'view';
+  }
+  else if ($form_id == 'field_ui_form_display_overview_form') {
+    $type = 'form';
+  }
+
+
+  $field_group_field_ui->setFormData($form, $form_state, $form_id);
+  // dsm($form);
 
   $field_group = new FieldGroup($form, $form_state, $form_id);
   $existing_field_groups = $field_group->getFieldGroups();
@@ -146,9 +96,11 @@ function field_group_form_field_ui_form_display_overview_form_alter(&$form, &$fo
     // $field_parent = config('field_group.' . $id)->get('parent');
     $field_parent = config('field_group.' . $id)->get('machine_name');
     $fields = config('field_group.' . $id)->get('fields');
-    foreach ($fields as $field_name => $field_name) {
-      // dsm($field_name . ':' . $field_parent);
-      $form['fields'][$field_name]['parent_wrapper']['parent']['#value'] = $field_parent;
+    if(!empty($fields)) {
+      foreach ($fields as $field_name => $field_name) {
+        // dsm($field_name . ':' . $field_parent);
+        $form['fields'][$field_name]['parent_wrapper']['parent']['#value'] = $field_parent;
+      }
     }
     // dsm($field_name);
     // dsm($field_parent);
@@ -173,13 +125,13 @@ function field_group_form_field_ui_form_display_overview_form_alter(&$form, &$fo
   // dsm($form);
 
   //$field_group_ui = new FieldGroupFieldUi($form, $form_state, $form_id);
-
   // FOO THATS NEW.
   $form['fields']['#regions']['hidden']['rows_order'][] = '_add_new_field_group';
 
+
   $form['#validate'][] = 'field_group_overview_validate';
   $form['#submit'][] = array($field_group_field_ui, 'submitForm');
-  dsm($form);
+  // dsm($form);
 }
 
 
@@ -187,7 +139,7 @@ function field_group_form_field_ui_form_display_overview_form_alter(&$form, &$fo
  * Render API callback: Checks if a field machine name is taken.
  *
  * @param $value
- *   The machine name, not prefixed with 'field_'.
+ *   The machine name, not prefixed with 'field_group_'.
  *
  * @return
  *   Whether or not the field machine name is taken.
@@ -196,19 +148,15 @@ function _field_group_field_name_exists($value) {
   // Prefix with 'field_'.
   $field_name = 'field_group_' . $value;
 
-  // We need to check inactive fields as well, so we can't use
-  // field_info_fields().
-  // return (bool) field_read_fields(array('field_name' => $field_name), array('include_inactive' => TRUE));
-  // TODO: This has to be done :)
-  return FALSE;
+  $exists = Drupal::entityQuery('field_group')
+   ->condition('machine_name', $value)
+   ->execute();
+
+  if(isset($exists) && !empty($exists)) {
+    return FALSE;
+  }
+  return TRUE;
 }
-
-
-function field_group_overview_validate($form, &$form_state) {
-  // dsm($form_state);
-}
-
-
 
 
 function field_group_field_overview_row_region($row) {
