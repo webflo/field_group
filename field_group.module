@@ -316,143 +316,46 @@ function field_group_attach_groups(&$build, $entity, $display) {
     $fields = config('field_group.' . $key)->get('fields');
     $machine_name = config('field_group.' . $key)->get('machine_name');
     $children = array();
+    $build[$machine_name] = array(
+      '#type' => 'field_group',
+      '#widget' => $widget_type,
+    );
     foreach ($fields as $field_name => $field_name) {
       if(isset($build[$field_name])) {
-        $children[$field_name] = $build[$field_name];
+        $build[$machine_name][$field_name] = $build[$field_name];
         unset($build[$field_name]);
       }
     }
-    $build[$machine_name] = array(
-      '#children' => $children,
-      '#theme_wrappers' => array('field_group__' . $widget_type),
-    );
+
   }
-
-
-// $build['field_asdfgh']['#theme_wrappers'] = array('field_group__div');
-// $build['field_tags']['#theme_wrappers'] = array('field_group__div');
-// $build['field_test']['#theme_wrappers'] = array('field_group__div');
-  // dsm($build);
-// if(isset($build['field_tags']) ) {
-//   $build['group_test'] = array(
-//     '#children' => array(
-//       $build['field_tags'],
-//       $build['field_test']
-//     ),
-//     '#theme_wrappers' => array('field_group__div')
-//   );
-//   unset($build['field_tags']);
-//   unset($build['field_test']);
-// }
-// $build['body']['#theme_wrappers'] = array('field_group__div');
-
-  // dsm($build);
-  // $build += $instances;
-
-  // $build['test'] = array(
-  //   '#type' => 'details',
-  //   '#title' => t('Menu settings'),
-  //   '#access' => user_access('administer menu'),
-  //   '#collapsed' => 'blubb',
-  //   '#group' => 'advanced',
-  //   '#attached' => array(
-  //     'library' => array(array('menu', 'drupal.menu')),
-  //   ),
-  //   '#tree' => TRUE,
-  //   '#weight' => -2,
-  //   '#attributes' => array('class' => array('menu-link-form')),
-  // );
-
-  // dsm($build);
-  // TODO: Add the groups here.
-  // $build += field_group_dummy_groups();
-  // $build['#pre_render'][] = 'field_group_build_pre_render';
-  // $build['#post_render'][] = 'field_group_build_post_render';
 }
 
-function field_group_build_post_render($build) {
-  // dsm($build);
-
-  return $build;
-}
-
-function field_group_build_pre_render($build) {
-  // dsm('field_group_build_pre_render');
-
-  // $build['test'] = array(
-  //   '#type' => 'details',
-  //   '#title' => t('Menu settings'),
-  //   '#access' => user_access('administer menu'),
-  //   '#collapsed' => 'blubb',
-  //   '#group' => 'advanced',
-  //   '#attached' => array(
-  //     'library' => array(array('menu', 'drupal.menu')),
-  //   ),
-  //   '#tree' => TRUE,
-  //   '#weight' => -2,
-  //   '#attributes' => array('class' => array('menu-link-form')),
-  // );
-
-  // $build['test']['field_tags'] = $build['field_tags'];
-
-  // unset($build['field_tags']);
-
-  // dsm(theme('field_group__div', array('content' => $build['field_tags'],)));
-  // $build['field_tags'] = theme('field_group__div', array('content' => $build['field_tags'],));
-
-  // ADD PARENT PARAMETERS
-  // $field_group_storage = $_SESSION['field_group'];
-  // foreach($field_group_storage as $field_name => $field_parent) {
-  //   $build[$field_name]['parent_wrapper']['parent']['#value'] = $field_parent;
-  // }
-  // dsm($build);
-
-  // dsm(field_group_get_field_groups());
-
-  // TODO: invoke hook/plugins.
-  return $build;
-}
 
 function template_preprocess_field_group__div(&$variables) {
-  $variables['elements'] = $variables['element']['#children'];
-  // dsm($variables);
+  // TODO: We'll see, perheps nothing.
 }
 function template_preprocess_field_group__fieldset(&$variables) {
-  $variables['elements'] = $variables['element']['#children'];
-  // dsm($variables);
+  // TODO: We'll see, perheps nothing.
 }
-// function theme_field_group__div($variables) {
-//   $element = $variables['element'];
-//   dsm($variables);
 
-//   // Special handling for form elements.
-//   if (isset($element['#array_parents'])) {
-//     // Assign an html ID.
-//     if (!isset($element['#attributes']['id'])) {
-//       $element['#attributes']['id'] = $element['#id'];
-//     }
-//     // Add the 'form-wrapper' class.
-//     $element['#attributes']['class'][] = 'form-wrapper';
-//   }
-
-//   return '<fieldset' . new Attribute($element['#attributes']) . '>' . $element['#children'] . '</fieldset>';
-// }
+function theme_field_group(&$variables) {
+  $element = $variables['element'];
+  return theme('field_group__' . $element['#widget'], $variables + array(
+    'children' => $element['#children']
+  ));
+}
 
 function field_group_theme() {
   return array(
+    'field_group' => array(
+      'render element' => 'element',
+    ),
+    // TODO: Generate theme function for each widget plugin.
     'field_group__div' => array(
-      // 'variables' => array(
-      //   'element' => NULL,
-      //   'attributes' => NULL,
-      // ),
       'render element' => 'element',
       'template' => 'field-group--div',
     ),
     'field_group__fieldset' => array(
-      // 'variables' => array(
-      //   'element' => NULL,
-      //   'attributes' => NULL,
-      // ),
       'render element' => 'element',
       'template' => 'field-group--fieldset',
     ),
@@ -470,6 +373,20 @@ function field_group_widget_options() {
     }
   }
   return $widget_options;
+}
+
+
+
+/**
+ * Implementation of hook_element_info().
+ */
+function field_group_element_info() {
+  $types = array();
+  $types['field_group'] = array(
+    '#theme_wrappers' => array('field_group'),
+  );
+
+  return $types;
 }
 
 

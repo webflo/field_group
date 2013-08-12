@@ -13,12 +13,6 @@
  * @ingroup themeable
  */
 #}
-TEST.anfang
-<div id="YEAH">
-  {% for children in elements %}
-    <div{{ children.attributes }}>
-      {{ children }}
-    </div>
-  {% endfor %}
+<div>
+  {{ children }}
 </div>
-TEST.ende
