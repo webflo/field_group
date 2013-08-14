@@ -58,7 +58,8 @@ class FieldGroupFieldUi {
     }
 
     // TODO: This is still crappy. Empty field groups are not stored correctly.
-
+    // TODO: Make it possible to save _add_new_field_group together with nested fields.
+    //       This might become a little tricky :/
     $already_saved = array();
     $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
     // Save existing field_groups.

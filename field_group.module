@@ -21,37 +21,6 @@ use Drupal\Core\Template\Attribute;
 use Drupal\Core\Entity\EntityManager;
 
 
-// function field_group_form_alter(&$form, &$form_state, $form_id) {
-//   // dpm($form['fields']['field_test']['#region_callback']);
-//   // dvm($form['fields']['_add_new_field']);
-//   // dsm(get_defined_vars());
-//   // $form['fields']['#regions']['content']['rows_order'][] = '_add_new_field_group';
-//   // $form['fields']['_add_new_field_group'] = $form['fields']['_add_new_field'];
-//   // dsm($form);
-// }
-
-// TODO: Save groups per entity
-// function field_group_save_field_groups(EntityInterface $field_group) {
-//   $entity = entity_create('field_group', $field_group);
-//   $entity->save();
-// }
-
-
-// function field_group_field_attach_form(EntityInterface $entity, &$form, &$form_state, $lancode) {
-//   dsm($entity);
-// }
-
-// TODO: Save each field group in it's own config entity -> NOT
-// Catch fieldgroups how?
-
-
-/**
- *
- */
-function field_group_return_id($entity_type, $bundle, $display_mode, $view_mode) {
-  return $entity_type . '.' . $bundle . '.' . $display_mode . '.' . $view_mode;
-}
-
 
 // MANAGE DISPLAY: field_ui_display_overview_form
 function field_group_form_field_ui_display_overview_form_alter(&$form, &$form_state, $form_id) {
@@ -77,12 +46,7 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
   $field_group_field_ui = new FieldGroupFieldUi($storage_controller);
   $field_group_field_ui->setFormData($form, $entity_type, $bundle, $display_mode, $view_mode);
 
-
-
-  // dsm($entity_type);
-  // dsm($bundle);
-  // dsm($display_mode);
-  // dsm($view_mode);
+  // Get existing fieldgroups.
   $field_group = new FieldGroup($entity_type, $bundle, $display_mode, $view_mode);
   $existing_field_groups = $field_group->getFieldGroups();
 
@@ -99,55 +63,43 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
     $form['fields'][$group_name] = $group;
   }
 
-
-
-  // // ADD PARENT PARAMETERS
-    // dsm($existing_field_groups);
+  // Add the parent parameters.
+  // TODO: This may needs to be refactored.
   foreach($existing_field_groups as $id => $id) {
-    // TODO: Set parent, but we have to save them first!
     $field_parent = config('field_group.' . $id)->get('machine_name');
     $fields = config('field_group.' . $id)->get('fields');
     if(!empty($fields)) {
       foreach ($fields as $field_name => $field_name) {
-        // dsm($field_name . ':' . $field_parent);
-
         if($field_name != $field_parent) {
           $form['fields'][$field_name]['parent_wrapper']['parent']['#value'] = $field_parent;
         }
       }
     }
-    // dsm($field_name);
-    // dsm($field_parent);
-    // $form['fields'][$field_name]['parent_wrapper']['parent']['#value'] = $field_parent;
   }
 
-
-  // $form['fields']['field_group_test']['parent_wrapper']['parent']['#value'] = 'field_group_test_group';
-  // dsm($form['fields']);
-
+  // Prepare options to make them draggable to field_groups.
   $options = array();
   $option = $field_group->getFieldgroupInstance($machine_names);
   $option = (array) array_keys($option);
   foreach($option as $delta => $key) {
     $options[$key] = $key;
   }
+  // Add _add_new_field_group to options, to be able to nest fields on-the-flow.
   $options['_add_new_field_group'] = '_add_new_field_group';
-
+  // Add options to the fields.
   foreach($draggable_fields as $field_name) {
     if(isset($form['fields'][$field_name])) {
       $form['fields'][$field_name]['parent_wrapper']['parent']['#options'] = $options;
     }
   }
-  // dsm($form);
 
-  //$field_group_ui = new FieldGroupFieldUi($form, $form_state, $form_id);
-  // FOO THATS NEW.
+  // We need to add _add_new_field_group to the regions array, otherwise it won't be displayed.
   $form['fields']['#regions']['hidden']['rows_order'][] = '_add_new_field_group';
 
-
-  // $form['#validate'][] = 'field_group_overview_validate';
+  // Use custom submit function.
+  // TODO: The submit function is storing the field_groups and may need to be added to
+  //       the FieldGroup class instead of the UI class.
   $form['#submit'][] = array($field_group_field_ui, 'submitForm');
-  // dsm($form);
 }
 
 
