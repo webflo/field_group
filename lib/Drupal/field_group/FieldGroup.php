@@ -14,22 +14,20 @@ use Drupal;
  */
 class FieldGroup {
 
-  private $form;
-  private $form_state;
-  private $form_id;
+  // private $form;
+  // private $form_state;
+  // private $form_id;
 
   private $entity_type;
   private $bundle;
-  private $mode = 'form';
+  private $display_mode;
+  private $view_mode;
 
-  public function __construct(&$form, &$form_state, $form_id) {
-    $this->form = $form;
-    $this->form_state = $form_state;
-    $this->form_id = $form_id;
-
-    $this->entity_type = $this->form['#entity_type'];
-    $this->bundle = $this->form['#bundle'];
-    $this->mode = isset($this->form['#view_mode']) ? $this->form['#view_mode'] : 'form';
+  public function __construct($entity_type, $bundle, $display_mode, $view_mode) {
+    $this->entity_type = $entity_type;
+    $this->bundle = $bundle;
+    $this->display_mode = $display_mode;
+    $this->view_mode = $view_mode;
   }
 
   /**
@@ -48,9 +46,14 @@ class FieldGroup {
     return Drupal::entityQuery('field_group')
                    ->condition('entity_type', $this->entity_type)
                    ->condition('bundle', $this->bundle)
-                   ->condition('mode', $this->mode)
+                   ->condition('display_mode', $this->display_mode)
+                   ->condition('view_mode', $this->view_mode)
                    ->execute();
   }
+
+
+
+
 
   private function getMachineNames() {
     $machine_names = array();
@@ -74,28 +77,6 @@ class FieldGroup {
     );
   }
 
-  public function field_group_overview_submit($form, $form_state) {
-    $values = $form_state['values']['fields'];
-
-    $save_to_field_group = array();
-    // TODO: Save field group changes on existing ones.
-    foreach ($this->getDraggableFields() as $key => $field_name) {
-      if(!empty($values[$field_name]['parent'])) {
-        $parent = $values[$field_name]['parent'];
-        $save_to_field_group[$parent][$field_name] = $field_name;
-      }
-    }
-
-    foreach($save_to_field_group as $field_group_name => $field) {
-      key($field);
-    }
-
-    // If _add_new_field_group is used.
-    if(!empty($values['_add_new_field_group']['field_name'])) {
-      $this->add_new_fieldgroup($values['_add_new_field_group']);
-    }
-  }
-
   public function add_new_fieldgroup($values) {
     $machine_name = 'field_group_' . $values['field_name'];
     $field_group_id = $this->entity_type . '.' . $this->bundle . '.' . $this->mode . '.' . $machine_name;
@@ -110,7 +91,8 @@ class FieldGroup {
       // 'field_groups' => $field_group,
       'entity_type' => $this->entity_type,
       'bundle' => $this->bundle,
-      'mode' => $this->mode,
+      'display_mode' => $this->display_mode,
+      'view_mode' => $this->view_mode,
       'widget_type' => $widget_type,
       'parent' => $parent,
       'machine_name' => $machine_name,
@@ -122,11 +104,14 @@ class FieldGroup {
     $entity->save();
   }
 
+  private function getId() {
+    return $this->entity_type . '.' . $this->bundle . '.' . $this->display_mode . '.' . $this->view_mode;
+  }
 
   public function getFieldgroupInstance($keys = array()) {
     $groups = array();
     foreach($keys as $delta => $name) {
-      $id = 'field_group.' . $this->entity_type . '.' . $this->bundle . '.' . $this->mode . '.' . $name;
+      $id = 'field_group.' . $this->getId() . '.' . $name;
       $groups[$name] = array(
         '#attributes' => array(
           'class' => array(

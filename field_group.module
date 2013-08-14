@@ -45,6 +45,13 @@ use Drupal\Core\Entity\EntityManager;
 // Catch fieldgroups how?
 
 
+/**
+ *
+ */
+function field_group_return_id($entity_type, $bundle, $display_mode, $view_mode) {
+  return $entity_type . '.' . $bundle . '.' . $display_mode . '.' . $view_mode;
+}
+
 
 // MANAGE DISPLAY: field_ui_display_overview_form
 function field_group_form_field_ui_display_overview_form_alter(&$form, &$form_state, $form_id) {
@@ -56,22 +63,27 @@ function field_group_form_field_ui_form_display_overview_form_alter(&$form, &$fo
 }
 
 function field_group_admin_form(&$form, &$form_state, $form_id) {
+
+  $entity_type = $form['#entity_type'];
+  $bundle = $form['#bundle'];
+  $display_mode = ($form_id == 'field_ui_display_overview_form') ? 'view' : FALSE;
+  $display_mode = ($form_id == 'field_ui_form_display_overview_form') ? 'form' : $display_mode;
+  $view_mode = $form['#mode'];
+
+
+
+
   $storage_controller = Drupal::entityManager()->getStorageController('field_group');
   $field_group_field_ui = new FieldGroupFieldUi($storage_controller);
-
-  // We need to make a diffrence between form displays and normal displays.
-  if ($form_id == 'field_ui_display_overview_form') {
-    $type = 'view';
-  }
-  else if ($form_id == 'field_ui_form_display_overview_form') {
-    $type = 'form';
-  }
+  $field_group_field_ui->setFormData($form, $entity_type, $bundle, $display_mode, $view_mode);
 
 
-  $field_group_field_ui->setFormData($form, $form_state, $form_id);
-  // dsm($form);
 
-  $field_group = new FieldGroup($form, $form_state, $form_id);
+  // dsm($entity_type);
+  // dsm($bundle);
+  // dsm($display_mode);
+  // dsm($view_mode);
+  $field_group = new FieldGroup($entity_type, $bundle, $display_mode, $view_mode);
   $existing_field_groups = $field_group->getFieldGroups();
 
 
@@ -93,19 +105,23 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
     // dsm($existing_field_groups);
   foreach($existing_field_groups as $id => $id) {
     // TODO: Set parent, but we have to save them first!
-    // $field_parent = config('field_group.' . $id)->get('parent');
     $field_parent = config('field_group.' . $id)->get('machine_name');
     $fields = config('field_group.' . $id)->get('fields');
     if(!empty($fields)) {
       foreach ($fields as $field_name => $field_name) {
         // dsm($field_name . ':' . $field_parent);
-        $form['fields'][$field_name]['parent_wrapper']['parent']['#value'] = $field_parent;
+
+        if($field_name != $field_parent) {
+          $form['fields'][$field_name]['parent_wrapper']['parent']['#value'] = $field_parent;
+        }
       }
     }
     // dsm($field_name);
     // dsm($field_parent);
     // $form['fields'][$field_name]['parent_wrapper']['parent']['#value'] = $field_parent;
   }
+
+
   // $form['fields']['field_group_test']['parent_wrapper']['parent']['#value'] = 'field_group_test_group';
   // dsm($form['fields']);
 
@@ -245,17 +261,17 @@ function field_group_attach_groups(&$build, $entity, $display) {
   // dsm($build);
 
   // TODO: This should be the right view mode ;)
-  $form = array(
-    '#view_mode' => $display->mode,
-    '#view_mode' => 'form',
-    '#bundle' => $display->bundle,
-    '#entity_type' => $display->targetEntityType
-  );
-  // dsm($form);
-  $form_state = array();
-  $form_id = '';
-  $field_group = new FieldGroup($form, $form_state, $form_id);
+  $form = array();
+
+  $entity_type = $display->targetEntityType;
+  $bundle = $display->bundle;
+  $display_mode = 'view';
+  $view_mode = $display->mode;
+
+
+  $field_group = new FieldGroup($entity_type, $bundle, $display_mode, $view_mode);
   $existing_field_groups = $field_group->getFieldGroups();
+
   // dsm(config(reset($existing_field_groups)));
 
   // WRAP FIELDS INTO FIELDGROUPS!!

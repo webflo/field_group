@@ -48,8 +48,8 @@ class FieldGroup extends ConfigEntityBase implements FieldGroupInterface {
 
   public $entity_type;
   public $bundle;
-  public $mode;
-  public $type;
+  public $display_mode;
+  public $view_mode;
 
   public $widget_type;
   public $parent;
