@@ -163,4 +163,96 @@ class FieldGroupFieldUi {
     );
   }
 
+
+
+
+
+  /**
+   * Form submission handler for multistep buttons.
+   */
+  public function multistepSubmit($form, &$form_state) {
+    $trigger = $form_state['triggering_element'];
+    $op = $trigger['#op'];
+
+    switch ($op) {
+      case 'edit':
+        // Store the field whose settings are currently being edited.
+        $field_name = $trigger['#field_name'];
+        $form_state['plugin_settings_edit'] = $field_name;
+        break;
+
+      case 'update':
+        // Store the saved settings, and set the field back to 'non edit' mode.
+        $field_name = $trigger['#field_name'];
+        $values = $form_state['values']['fields'][$field_name]['settings_edit_form']['settings'];
+        $form_state['plugin_settings'][$field_name] = $values;
+        unset($form_state['plugin_settings_edit']);
+        break;
+
+      case 'cancel':
+        // Set the field back to 'non edit' mode.
+        unset($form_state['plugin_settings_edit']);
+        break;
+
+      case 'refresh_table':
+        // If the currently edited field is one of the rows to be refreshed, set
+        // it back to 'non edit' mode.
+        $updated_rows = explode(' ', $form_state['values']['refresh_rows']);
+        if (isset($form_state['plugin_settings_edit']) && in_array($form_state['plugin_settings_edit'], $updated_rows)) {
+          unset($form_state['plugin_settings_edit']);
+        }
+        break;
+    }
+
+    $form_state['rebuild'] = TRUE;
+  }
+  /**
+   * Ajax handler for multistep buttons.
+   */
+  public function multistepAjax($form, &$form_state) {
+    $trigger = $form_state['triggering_element'];
+    $op = $trigger['#op'];
+
+    // dsm($op);
+    // dsm($trigger['#field_name']);
+    // Pick the elements that need to receive the ajax-new-content effect.
+    switch ($op) {
+      case 'edit':
+        $updated_rows = array($trigger['#field_name']);
+        $updated_columns = array('widget_type');
+        break;
+
+      case 'update':
+      case 'cancel':
+        $updated_rows = array($trigger['#field_name']);
+        $updated_columns = array('plugin', 'settings_summary', 'settings_edit');
+        break;
+
+      case 'refresh_table':
+        $updated_rows = array_values(explode(' ', $form_state['values']['refresh_rows']));
+        $updated_columns = array('settings_summary', 'settings_edit');
+        break;
+    }
+
+    foreach ($updated_rows as $name) {
+      foreach ($updated_columns as $key) {
+        dsm('FOO');
+        $element = &$form['fields'][$name][$key];
+        $plugin = drupal_container()->get('plugin.manager.field_group')->shite('fieldset');
+        dsm($plugin);
+        // $plugin->createInstance('fieldset');
+        // dsm($plugin->shite('fieldset'));
+        // $plugin->shite('fieldset');
+        // dsm($fielset->settingsForm($form, $form_state));
+        $element['#prefix'] = '<div class="ajax-new-content">' . (isset($element['#prefix']) ? $element['#prefix'] : '');
+        $element['#suffix'] = (isset($element['#suffix']) ? $element['#suffix'] : '') . '</div>';
+        dsm($element);
+      }
+    }
+
+    // Return the whole table.
+    return $form['fields'];
+  }
+
+
 }

@@ -31,7 +31,7 @@ use Drupal\Core\Entity\EntityInterface;
  */
 class Div {
 
-  public function settingsF1orm() {
+  public function settingsForm() {
 
     return $form;
   }

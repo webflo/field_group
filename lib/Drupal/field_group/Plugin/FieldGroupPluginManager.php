@@ -7,32 +7,35 @@
 
 namespace Drupal\field_group\Plugin;
 
-use Drupal\Component\Plugin\PluginManagerBase;
-use Drupal\Core\Plugin\Discovery\AnnotatedClassDiscovery;
+use Drupal\Core\Plugin\DefaultPluginManager;
+use Drupal\Core\Cache\CacheBackendInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\Language\LanguageManager;
 
-class FieldGroupPluginManager extends PluginManagerBase {
 
-  /**
-   * Overrides Drupal\Component\Plugin\PluginManagerBase:$defaults.
-   */
-  protected $defaults = array(
-    'field_types' => array(),
-    'settings' => array(),
-  );
+class FieldGroupPluginManager extends DefaultPluginManager {
 
   /**
-   * Constructs a FormatterPluginManager object.
+   * Constructs the FieldGroupManager object.
    *
-   * @param array $namespaces
-   *   An array of paths keyed by their corresponding namespaces.
+   * @param \Traversable $namespaces
+   *   An object that implements \Traversable which contains the root paths
+   *   keyed by the corresponding namespace to look for plugin implementations.
+   * @param \Drupal\Core\Cache\CacheBackendInterface $cache_backend
+   *   Cache backend instance to use.
+   * @param \Drupal\Core\Language\LanguageManager $language_manager
+   *   The language manager.
    */
-  public function __construct(\Traversable $namespaces) {
-    // This is the essential line you have to use in your manager.
-    $this->discovery = new AnnotatedClassDiscovery('Plugin/field_group', $namespaces);
-    // Every other line is a good practice.
-    // $this->discovery = new ProcessDecorator($this->discovery, array($this, 'processDefinition'));
-    // $this->discovery = new AlterDecorator($this->discovery, 'field_formatter_info');
-    // $this->discovery = new CacheDecorator($this->discovery, 'field_formatter_types', 'field');
+  public function __construct(\Traversable $namespaces, CacheBackendInterface $cache_backend, LanguageManager $language_manager) {
+    parent::__construct('Plugin/field_group', $namespaces);
   }
+
+  // public function createInstance($plugin_id, array $configuration) {
+  //   $plugin_definition = $this->getDefinition($plugin_id);
+
+  //   $plugin_class = DefaultFactory::getPluginClass($plugin_id, $plugin_definition);
+  //   dsm($plugin_class);
+  //   return $plugin_class($plugin_id, $plugin_definition);
+  // }
 
 }

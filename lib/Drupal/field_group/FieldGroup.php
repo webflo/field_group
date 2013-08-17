@@ -189,12 +189,12 @@ class FieldGroup {
             ),
           ),
           '#cell_attributes' => array(
-            'colspan' => 3,
+            'colspan' => 1,
           ),
           '#prefix' => '<div class="add-new-placeholder"> </div>',
         ),
         'operations' => array(
-          '#markup' => '',
+          '#markup' => l('delete', 'field_group/delete'),
         ),
       );
     }
