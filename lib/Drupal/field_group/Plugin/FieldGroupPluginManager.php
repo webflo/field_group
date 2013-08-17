@@ -26,7 +26,7 @@ class FieldGroupPluginManager extends DefaultPluginManager {
    * @param \Drupal\Core\Language\LanguageManager $language_manager
    *   The language manager.
    */
-  public function __construct(\Traversable $namespaces, CacheBackendInterface $cache_backend, LanguageManager $language_manager) {
+  public function __construct(\Traversable $namespaces) {
     parent::__construct('Plugin/field_group', $namespaces);
   }
 

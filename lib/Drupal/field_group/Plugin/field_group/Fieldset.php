@@ -5,7 +5,7 @@
  * Contains \Drupal\field_group\Plugin\field_group\Fieldset.
  */
 
-namespace Drupal\field_group\Plugin\field_group\Fieldset;
+namespace Drupal\field_group\Plugin\field_group;
 
 use Drupal\Component\Annotation\Plugin;
 use Drupal\Core\Annotation\Translation;
@@ -36,7 +36,7 @@ class Fieldset {
     $element['image_style'] = array(
       '#title' => t('Image style'),
       '#type' => 'select',
-      '#default_value' => $this->getSetting('image_style'),
+      // '#default_value' => $this->getSetting('image_style'),
       '#empty_option' => t('None (original image)'),
       '#options' => $image_styles,
     );
@@ -48,7 +48,7 @@ class Fieldset {
     $element['image_link'] = array(
       '#title' => t('Link image to'),
       '#type' => 'select',
-      '#default_value' => $this->getSetting('image_link'),
+      // '#default_value' => $this->getSetting('image_link'),
       '#empty_option' => t('Nothing'),
       '#options' => $link_types,
     );

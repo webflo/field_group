@@ -5,7 +5,7 @@
  * Contains \Drupal\field_group\Plugin\field_group\Div.
  */
 
-namespace Drupal\field_group\Plugin\field_group\Div;
+namespace Drupal\field_group\Plugin\div;
 
 use Drupal\Component\Annotation\Plugin;
 use Drupal\Core\Annotation\Translation;

@@ -176,6 +176,7 @@ class FieldGroupFieldUi {
 
     switch ($op) {
       case 'edit':
+      dsm('edit');
         // Store the field whose settings are currently being edited.
         $field_name = $trigger['#field_name'];
         $form_state['plugin_settings_edit'] = $field_name;
@@ -238,12 +239,7 @@ class FieldGroupFieldUi {
       foreach ($updated_columns as $key) {
         dsm('FOO');
         $element = &$form['fields'][$name][$key];
-        $plugin = drupal_container()->get('plugin.manager.field_group')->shite('fieldset');
-        dsm($plugin);
-        // $plugin->createInstance('fieldset');
-        // dsm($plugin->shite('fieldset'));
-        // $plugin->shite('fieldset');
-        // dsm($fielset->settingsForm($form, $form_state));
+
         $element['#prefix'] = '<div class="ajax-new-content">' . (isset($element['#prefix']) ? $element['#prefix'] : '');
         $element['#suffix'] = (isset($element['#suffix']) ? $element['#suffix'] : '') . '</div>';
         dsm($element);

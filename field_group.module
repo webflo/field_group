@@ -57,9 +57,6 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
   $existing_field_groups = $field_group->getFieldGroups();
 
 
-  Drupal::service('plugin.manager.field_group')->createInstance('fieldset');
-
-
   $add_group = new FieldGroupAddGroup();
   $form['fields']['_add_new_field_group'] = $add_group->field_group_add_group();
 
@@ -72,7 +69,8 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
     $form['fields'][$group_name] = $group;
     $form['fields'][$group_name]['settings_edit'] = array(
       '#submit' => array(
-        array($form_state['build_info']['callback_object'], 'multistepSubmit'),
+        // array($form_state['build_info']['callback_object'], 'multistepSubmit'),
+        array($field_group_field_ui, 'multistepSubmit'),
       ),
       '#ajax' => array(
         'callback' => array($field_group_field_ui, 'multistepAjax'),
