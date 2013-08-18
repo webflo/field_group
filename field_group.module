@@ -106,9 +106,50 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
   // TODO: THis needs to be generic. Looks like a huge amount of work -.-"
   if($form_state['plugin_settings_edit'] == 'field_group_what_about_that') {
     $insance = Drupal::service('plugin.manager.field_group')->createInstance('fieldset');
-    $settings = $insance->settingsForm($form, $form_state);
+    $settings_form = $insance->settingsForm($form, $form_state);
     unset($form['fields']['field_group_what_about_that']['plugin']['type']);
-    $form['fields']['field_group_what_about_that']['plugin']['settings_edit_form'] = $settings;
+    // $form['fields']['field_group_what_about_that']['plugin']['settings_edit_form'] = $settings;
+
+
+    $field_id = 'field_group_what_about_that';
+    // Base button element for the various plugin settings actions.
+    $base_button = array(
+      '#submit' => array(array($form_state['build_info']['callback_object'], 'multistepSubmit')),
+      '#ajax' => array(
+        'callback' => array($form_state['build_info']['callback_object'], 'multistepAjax'),
+        'wrapper' => 'field-display-overview-wrapper',
+        'effect' => 'fade',
+      ),
+      '#field_name' => $field_id,
+    );
+
+    $form['fields']['field_group_what_about_that']['plugin']['settings_edit_form'] += array(
+      '#type' => 'container',
+      '#attributes' => array('class' => array('field-plugin-settings-edit-form')),
+      '#parents' => array('fields', $field_id, 'settings_edit_form'),
+      'label' => array(
+        '#markup' => t('Plugin settings'),
+      ),
+      'settings' => $settings_form,
+      'actions' => array(
+        '#type' => 'actions',
+        'save_settings' => $base_button + array(
+          '#type' => 'submit',
+          '#name' => $field_id . '_plugin_settings_update',
+          '#value' => t('Update'),
+          '#op' => 'update',
+        ),
+        'cancel_settings' => $base_button + array(
+          '#type' => 'submit',
+          '#name' => $field_id . '_plugin_settings_cancel',
+          '#value' => t('Cancel'),
+          '#op' => 'cancel',
+          // Do not check errors for the 'Cancel' button, but make sure we
+          // get the value of the 'plugin type' select.
+          '#limit_validation_errors' => array(array('fields', $field_id, 'type')),
+        ),
+      ),
+    );
     $form['fields']['field_group_what_about_that']['plugin']['#cell_attributes'] = array(
       'colspan' => 3,
     );
@@ -120,6 +161,8 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
   // dsm($form_state);
 
   // dsm($form['fields']['field_group_test']);
+  dsm($form['fields']['field_test']);
+  dsm($form['fields']['field_test']['plugin']['settings_edit_form']);
   // dsm($form['fields']['field_image']);
   // dsm($form['fields']['field_summary']);
 

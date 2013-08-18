@@ -80,7 +80,7 @@ class FieldGroupFieldUi {
         $entity = $storage_controller->load($key);
         $entity->set('parent', $parent);
         $entity->set('fields', array());
-        $entity->set('widget_type', $values[$field_group_id]['type']);
+        $entity->set('widget_type', $values[$key]['type']);
         $entity->save($entity);
       }
     }
