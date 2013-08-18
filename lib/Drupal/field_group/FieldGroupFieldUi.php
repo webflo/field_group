@@ -70,7 +70,7 @@ class FieldGroupFieldUi {
       $entity = $storage_controller->load($id);
       $entity->set('parent', $parent);
       $entity->set('fields', $value);
-      $entity->set('widget_type', $values[$field_group_id]['widget_type']);
+      $entity->set('widget_type', $values[$field_group_id]['type']);
       $entity->save($entity);
     }
 
@@ -80,7 +80,7 @@ class FieldGroupFieldUi {
         $entity = $storage_controller->load($key);
         $entity->set('parent', $parent);
         $entity->set('fields', array());
-        $entity->set('widget_type', $values[$field_group_id]['widget_type']);
+        $entity->set('widget_type', $values[$field_group_id]['type']);
         $entity->save($entity);
       }
     }
@@ -90,7 +90,7 @@ class FieldGroupFieldUi {
     $machine_name = 'field_group_' . $values['field_name'];
     $field_group_id = $this->getEntityType() . '.' . $this->getBundle() . '.' . $this->getDisplayMode() . '.' . $this->getViewmode() . '.' . $machine_name;
 
-    $widget_type = $values['widget_type'];
+    $widget_type = $values['type'];
     $parent = $values['parent'];
     dsm($parent);
 

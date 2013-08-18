@@ -64,20 +64,22 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
   $machine_names = $field_group_field_ui->getMachineNames();
   $draggable_fields = $field_group_field_ui->getDraggableFields();
 
-  // dsm($form['fields']['field_image']['settings_edit']);
+  // // dsm($form['fields']['field_image']['settings_edit']);
   foreach($field_group->getFieldgroupInstance($machine_names) as $group_name => $group) {
+    $form['#fields'][] = $group_name;
     $form['fields'][$group_name] = $group;
     $form['fields'][$group_name]['settings_edit'] = array(
       '#submit' => array(
-        // array($form_state['build_info']['callback_object'], 'multistepSubmit'),
-        array($field_group_field_ui, 'multistepSubmit'),
+        array($form_state['build_info']['callback_object'], 'multistepSubmit'),
+        // array($field_group_field_ui, 'multistepSubmit'),
       ),
       '#ajax' => array(
-        'callback' => array($field_group_field_ui, 'multistepAjax'),
+        'callback' => array($form_state['build_info']['callback_object'], 'multistepAjax'),
+        // 'callback' => array($field_group_field_ui, 'multistepAjax'),
         'wrapper' => 'field-display-overview-wrapper',
         'effect' => 'fade',
       ),
-      '#field_name' => $group_name, //'field_test',
+      '#field_name' => $group_name, // 'field_group-' + $group_name, //'field_test',
       '#type' => 'image_button',
       '#name' => 'field_image_settings_edit',
       '#src' => 'core/misc/configure-dark.png',
@@ -91,7 +93,7 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
       '#limit_validation_errors' => array(
         0 => array(
           0 => 'fields',
-          1 => 'field_image',
+          1 => $group_name,
           2 => 'type'
         )
       ),
@@ -100,7 +102,26 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
     );
     // dsm($form['fields'][$group_name]);
   }
+
+  // TODO: THis needs to be generic. Looks like a huge amount of work -.-"
+  if($form_state['plugin_settings_edit'] == 'field_group_what_about_that') {
+    $insance = Drupal::service('plugin.manager.field_group')->createInstance('fieldset');
+    $settings = $insance->settingsForm($form, $form_state);
+    unset($form['fields']['field_group_what_about_that']['plugin']['type']);
+    $form['fields']['field_group_what_about_that']['plugin']['settings_edit_form'] = $settings;
+    $form['fields']['field_group_what_about_that']['plugin']['#cell_attributes'] = array(
+      'colspan' => 3,
+    );
+    unset($form['fields']['field_group_what_about_that']['settings_edit']);
+    unset($form['fields']['field_group_what_about_that']['settings_summary']);
+  }
+
   // dsm($form);
+  // dsm($form_state);
+
+  // dsm($form['fields']['field_group_test']);
+  // dsm($form['fields']['field_image']);
+  // dsm($form['fields']['field_summary']);
 
   // Add the parent parameters.
   // TODO: This may needs to be refactored.

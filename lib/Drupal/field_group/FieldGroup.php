@@ -110,6 +110,7 @@ class FieldGroup {
 
   public function getFieldgroupInstance($keys = array()) {
     $groups = array();
+
     foreach($keys as $delta => $name) {
       $id = 'field_group.' . $this->getId() . '.' . $name;
       $groups[$name] = array(
@@ -122,12 +123,17 @@ class FieldGroup {
         ),
         '#row_type' => 'field_group',
         '#region_callback' => 'field_group_field_overview_row_region',
-        'label' => array(
+        // '#js_settings' => array(
+        //   'rowHandler' => 'field_group',
+        //   'defaultPlugin' => 'div',
+        // ),
+        'human_name' => array(
           // TODO: should be dynamically.
-          '#markup' => 'Title',
+          '#markup' => $name,
         ),
         'weight' => array(
           '#type' => 'textfield',
+          // TODO: Save and reade weight attribtue.
           '#default_value' => '2',
           '#size' => 3,
           '#attributes' => array(
@@ -136,12 +142,12 @@ class FieldGroup {
             ),
           ),
           '#title_display' => 'invisible',
-          '#title' => 'Weight for Title',
+          '#title' => 'Weight for ' + $name,
         ),
         'parent_wrapper' => array(
           'parent' => array(
             '#type' => 'select',
-            '#title' => 'Parent for Title',
+            '#title' => 'Parent for ' + $name,
             '#title_display' => 'invisible',
             '#options' => array(),
             '#empty_value' => '',
@@ -166,36 +172,65 @@ class FieldGroup {
             ),
           ),
         ),
-        'field_name' => array(
-          '#markup' => 'field_group-' . $name,
+        'label' => array(
+          // '#type' => 'select',
+          // '#title' => 'Label display for Image',
+          // '#title_display' => 'invisible',
+          // '#options' => array(
+          //   'above' => 'Above',
+          //   'inline' => 'Inline',
+          //   'hidden' => '- Hidden -'
+          // ),
+          // '#default_value' => 'above',
+          '#markup' => 'No settings available yet',
         ),
-        'type' => array(
-          // TODO: Should be the selected Widget?
-          '#markup' => 'Field Group',
-        ),
-        'widget_type' => array(
-          // TODO: This should be dynamically.
-          '#type' => 'select',
-          '#title' => 'Widget for new field group',
-          '#title_display' => 'invisible',
-          '#default_value' => config($id)->get('widget_type'),
-          '#options' => field_group_widget_options(),
-          // TODO: Check how to make this translatable.
-          '#empty_option' => '- Select a field group type -',
-          '#description' => 'Form element to edit the data.',
-          '#attributes' => array(
-            'class' => array(
-              'widget-type-select',
+        // 'type' => array(
+        //   // TODO: Should be the selected Widget?
+        //   '#markup' => 'Field Group',
+        // ),
+        'plugin' => array(
+          'type' => array(
+            // TODO: This should be dynamically.
+            '#type' => 'select',
+            '#title' => 'Widget for new field group',
+            '#title_display' => 'invisible',
+            '#default_value' => config($id)->get('widget_type'),
+            '#options' => field_group_widget_options(),
+            // TODO: Check how to make this translatable.
+            '#empty_option' => '- Select a field group type -',
+            '#description' => 'Form element to edit the data.',
+            '#parents' => array(
+              'fields',
+              $name,
+              'type'
+            ),
+            '#attributes' => array(
+              'class' => array(
+                ' field-plugin-type',
+              ),
             ),
           ),
+          // 'settings_edit_form' => array(),
+          'settings_edit_form' => array(),
+          '#title' => 'Widget for Fieldgroup',
+          // '#cell_attributes' => array(
+          //   'colspan' => 1,
+          // ),
+          // '#prefix' => '<div class="add-new-placeholder"> </div>',
+        ),
+        'settings_summary' => array(
+          '#prefix' => '<div class="field-plugin-summary">',
+          '#markup' => 'We need some generic method to generate this.',
+          '#sufix' => '</div>',
           '#cell_attributes' => array(
-            'colspan' => 1,
+            'class' => array(
+              'field-plugin-summary-cell',
+            ),
           ),
-          '#prefix' => '<div class="add-new-placeholder"> </div>',
         ),
-        'operations' => array(
-          '#markup' => l('delete', 'field_group/delete'),
-        ),
+        // 'operations' => array(
+        //   '#markup' => l('delete', 'field_group/delete'),
+        // ),
       );
     }
 
