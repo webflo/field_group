@@ -4,7 +4,8 @@
  * Contains \Drupal\field_group\Plugin\Core\Entity\FieldGroup.
  */
 
-namespace Drupal\field_group\Plugin\Core\Entity;
+namespace Drupal\field_group\Entity;
+// namespace Drupal\field_group\Plugin\Core\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityBase;
 use Drupal\Core\Entity\Annotation\EntityType;
@@ -17,6 +18,7 @@ use Drupal\field_group\FieldGroupInterface;
  * @EntityType(
  *   id = "field_group",
  *   label = @Translation("Field Group data object"),
+ *   module = "field_group",
  *   controllers = {
  *     "storage" = "Drupal\Core\Config\Entity\ConfigStorageController"
  *   },
