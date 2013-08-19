@@ -15,7 +15,9 @@ use Drupal\Core\Entity\EntityStorageControllerInterface;
 class FieldGroupFieldUi {
 
   protected $storageController;
-  private $form;
+
+
+  private $fields;
   private $entity_type;
   private $bundle;
   private $display_mode;
@@ -26,16 +28,21 @@ class FieldGroupFieldUi {
     $this->storageController = $storage_controller;
   }
 
-  public function setFormData(&$form, $entity_type, $bundle, $display_mode, $view_mode) {
-    $this->form = $form;
-
+  public function setFormData($fields, $entity_type, $bundle, $display_mode, $view_mode) {
     $this->entity_type = $entity_type;
     $this->bundle = $bundle;
     $this->display_mode = $display_mode;
     $this->view_mode = $view_mode;
+    $this->fields = $fields;
     // $this->form_state = $form_state;
   }
 
+
+  /**
+   * This one needs a rewrite...
+   *
+   *
+   */
   public function submitForm(&$form, &$form_state) {
     $values = $form_state['input']['fields'];
 
@@ -86,6 +93,16 @@ class FieldGroupFieldUi {
     }
   }
 
+
+  /**
+   * This should be saveFieldgroup()
+   *
+   * TODO: We need a
+   *        - updateFieldGroup
+   *        - saveFieldGroup
+   *        - deleteFieldGroup
+   *
+   */
   private function addNewFieldGroup($values, $fields) {
     $machine_name = 'field_group_' . $values['field_name'];
     $field_group_id = $this->getEntityType() . '.' . $this->getBundle() . '.' . $this->getDisplayMode() . '.' . $this->getViewmode() . '.' . $machine_name;
@@ -154,7 +171,7 @@ class FieldGroupFieldUi {
 
   public function getDraggableFields() {
     $fieldGroupKeys = $this->getMachineNames();
-    return array_merge($this->form['#fields'], $this->form['#extra'], array(
+    return array_merge($this->fields['fields'], $this->fields['extra'], array(
         '_add_new_field',
         '_add_existing_field',
         '_add_new_field_group',

@@ -30,18 +30,11 @@ class FieldGroup {
     $this->view_mode = $view_mode;
   }
 
-  /**
-   * Returns the plugin manager for a certain field_group plugin type.
-   *
-   * @param string $type
-   *   The plugin type, for example filter.
-   *
-   * @return \Drupal\views\Plugin\FieldGroupPluginManager
-   */
-  public static function pluginManager($type) {
-    return Drupal::service('plugin.manager.field_group.' . $type);
-  }
 
+  /**
+   * This should be getAllFieldGroups() by
+   * entity_type, bundle, display_mode, view_mode.
+   */
   public function getFieldGroups() {
     return Drupal::entityQuery('field_group')
                    ->condition('entity_type', $this->entity_type)
@@ -54,7 +47,7 @@ class FieldGroup {
 
 
 
-
+  // TODO: CHeck if this is necessary.
   private function getMachineNames() {
     $machine_names = array();
     foreach($this->getFieldGroups() as $id) {
@@ -64,6 +57,8 @@ class FieldGroup {
     return $machine_names;
   }
 
+
+  // Get a list of all dragable fields, this should be a helper function.
   public function getDraggableFields() {
     $options = $this->getFieldgroupInstance($this->getMachineNames());
     $options = (array) array_keys($options);
@@ -77,42 +72,21 @@ class FieldGroup {
     );
   }
 
-  public function add_new_fieldgroup($values) {
-    $machine_name = 'field_group_' . $values['field_name'];
-    $field_group_id = $this->entity_type . '.' . $this->bundle . '.' . $this->mode . '.' . $machine_name;
-
-    $widget_type = $values['widget_type'];
-    $parent = $values['parent'];
-
-    $uuid = new Uuid();
-    $field_group = array(
-      'id' => $field_group_id,
-      // 'field_order' => $field_order,
-      // 'field_groups' => $field_group,
-      'entity_type' => $this->entity_type,
-      'bundle' => $this->bundle,
-      'display_mode' => $this->display_mode,
-      'view_mode' => $this->view_mode,
-      'widget_type' => $widget_type,
-      'parent' => $parent,
-      'machine_name' => $machine_name,
-      'uuid' => $uuid->generate(),
-      'label' => 'test',
-    );
-
-    $entity = entity_create('field_group', $field_group);
-    $entity->save();
-  }
 
   private function getId() {
     return $this->entity_type . '.' . $this->bundle . '.' . $this->display_mode . '.' . $this->view_mode;
   }
 
+  /**
+   * Generate fieldgroup isntances for field_ui.
+   */
   public function getFieldgroupInstance($keys = array()) {
     $groups = array();
 
     foreach($keys as $delta => $name) {
       $id = 'field_group.' . $this->getId() . '.' . $name;
+      $field_group = \Drupal::config($id)->get();
+
       $groups[$name] = array(
         '#attributes' => array(
           'class' => array(
@@ -129,7 +103,7 @@ class FieldGroup {
         // ),
         'human_name' => array(
           // TODO: should be dynamically.
-          '#markup' => $name,
+          '#markup' => $field_group['label'],
         ),
         'weight' => array(
           '#type' => 'textfield',
