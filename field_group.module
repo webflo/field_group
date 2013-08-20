@@ -117,7 +117,14 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
   // dsm($form);
 
   // TODO: THis needs to be generic. Looks like a huge amount of work -.-"
-  $testfield = 'field_group_neue_gruppe_yeay';
+  dsm($form_state);
+  $testfield = 'new_one';
+  if(isset($form_state['plugin_settings'])) {
+    // TODO: Check if this realy is a fieldgroup
+    foreach ($form_state['plugin_settings'] as $field_group_name => $values) {
+      $field_group_field_ui->submitSettingsForm($field_group_name, $values);
+    }
+  }
   if($form_state['plugin_settings_edit'] == $testfield) {
     $insance = Drupal::service('plugin.manager.field_group')->createInstance('fieldset');
     $settings_form = $insance->settingsForm($form, $form_state);
@@ -128,7 +135,9 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
     $field_id = $testfield;
     // Base button element for the various plugin settings actions.
     $base_button = array(
-      '#submit' => array(array($form_state['build_info']['callback_object'], 'multistepSubmit')),
+      '#submit' => array(
+        array($form_state['build_info']['callback_object'], 'multistepSubmit'),
+      ),
       '#ajax' => array(
         'callback' => array($form_state['build_info']['callback_object'], 'multistepAjax'),
         'wrapper' => 'field-display-overview-wrapper',
@@ -370,35 +379,22 @@ function field_group_attach_groups(&$build, $entity, $display) {
 
   $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
   $field_group_field_ui = new FieldGroupFieldUi($storage_controller);
-  $fields = array(
-    'fields' => $form['#fields'],
-    'extra' => $form['#extra']
-  );
+
+  // TODO: we need to get rid of the fields shit.
+  $fields = array();
   $field_group_field_ui->setFormData($fields, $entity_type, $bundle, $display_mode, $view_mode);
-  $existing_field_groups = $field_group_field_ui->getMachineNames();
-  // dsm($existing_field_groups);
-  // dsm(Drupal::config(reset($existing_field_groups)));
 
-  // WRAP FIELDS INTO FIELDGROUPS!!
-  foreach ($existing_field_groups as $key => $key) {
-    $widget_type = Drupal::config('field_group.' . $key)->get('type');
-    $fields = Drupal::config('field_group.' . $key)->get('fields');
-    $machine_name = Drupal::config('field_group.' . $key)->get('field_group_name');
-    $children = array();
-    $build[$machine_name] = array(
+  foreach($field_group_field_ui->getFieldGroups() as $group_id => $group) {
+    $build[$group->field_group_name] = array(
       '#type' => 'field_group',
-      '#widget' => $widget_type,
+      '#widget' => $group->type,
     );
-    if(!empty($fields)) {
-      foreach ($fields as $field_name => $field_name) {
-        if(isset($build[$field_name])) {
-          $build[$machine_name][$field_name] = $build[$field_name];
-          unset($build[$field_name]);
-        }
-      }
+    foreach ($group->fields as $delta => $field_name) {
+      $build[$group->field_group_name][$field_name] = $build[$field_name];
+      unset($build[$field_name]);
     }
-
   }
+
 }
 
 

@@ -72,6 +72,12 @@ class FieldGroupFieldUi {
 
   }
 
+  public function submitSettingsForm($field_group_name, $values) {
+    // TODO: Save settings to entity.
+    dsm($field_group_name);
+    dsm($values);
+  }
+
   /**
    * Needs at least ID parameter.
    */
