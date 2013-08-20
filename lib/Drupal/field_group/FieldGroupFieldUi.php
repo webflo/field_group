@@ -50,6 +50,8 @@ class FieldGroupFieldUi {
 
     // TODO: SAVE EMPTY FIELD GROUPS.
     $save_to_field_group = array();
+    $parent = '';
+    $already_saved = array();
     // TODO: Save field group changes on existing ones.
     foreach ($this->getDraggableFields() as $key => $field_name) {
       // dsm($values[$field_name]);
@@ -67,14 +69,16 @@ class FieldGroupFieldUi {
     // TODO: This is still crappy. Empty field groups are not stored correctly.
     // TODO: Make it possible to save _add_new_field_group together with nested fields.
     //       This might become a little tricky :/
-    $already_saved = array();
     $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
     // Save existing field_groups.
     foreach ($save_to_field_group as $field_group_id => $value) {
-      $id = $this->getEntityType() . '.' . $this->getBundle() . '.' . $this->getDisplayMode() . '.' . $this->getViewmode() . '.' . $field_group_id;
+      // $id = $this->getEntityType() . '.' . $this->getBundle() . '.' . $this->getDisplayMode() . '.' . $this->getViewmode() . '.' . $field_group_id;
+      $id = $field_group_id;
+      dsm($field_group_id);
       $already_saved += array($id => $id);
       // dsm($id);
       $entity = $storage_controller->load($id);
+      // dsm($entity);
       $entity->set('parent', $parent);
       $entity->set('fields', $value);
       $entity->set('widget_type', $values[$field_group_id]['type']);
@@ -82,7 +86,7 @@ class FieldGroupFieldUi {
     }
 
     // We assume that a field_group which is not saved above, is an empty one.
-    foreach ($this->getFieldGroups() as $key => $key) {
+    foreach ($this->getMachineNames() as $key => $key) {
       if(!in_array($key, $already_saved)) {
         $entity = $storage_controller->load($key);
         $entity->set('parent', $parent);
@@ -93,6 +97,26 @@ class FieldGroupFieldUi {
     }
   }
 
+  /**
+   * Needs at least ID parameter.
+   */
+  public function createFieldGroup($values = array()) {
+    $storageController = \Drupal::entityManager()->getStorageController('field_group');
+    $entity = $storageController->create($values);
+    return $entity->save();
+  }
+  private function updateFieldGroup() {
+    $storageController = \Drupal::entityManager()->getStorageController('field_group');
+    $entity = $storageController->create($values);
+  }
+
+  private function deleteFieldGroup($fieldGroup) {
+    $this->deleteFieldGroupsMultiple(array($fieldGroup));
+  }
+  private function deleteFieldGroupsMultiple($fieldGroups) {
+    $storageController = \Drupal::entityManager()->getStorageController('field_group');
+    $storageController->delete($fieldGroups);
+  }
 
   /**
    * This should be saveFieldgroup()
@@ -146,27 +170,32 @@ class FieldGroupFieldUi {
     return $this->view_mode;
   }
 
+  /**
+   * Fetch fieldGroup id's by given properies.
+   */
   public function getFieldGroups() {
-    $field_groups = \Drupal::entityQuery('field_group')
-                   ->condition('entity_type', $this->entity_type)
-                   ->condition('bundle', $this->bundle)
-                   ->condition('display_mode', $this->display_mode)
-                   ->condition('view_mode', $this->view_mode)
-                   ->execute();
-   return !empty($field_groups) ? $field_groups : array();
+    $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
+    $field_groups = $storage_controller->loadByProperties(
+      array(
+        'entity_type' => $this->entity_type,
+        'bundle' => $this->bundle,
+        'display_mode' => $this->display_mode,
+        'view_mode' => $this->view_mode
+      )
+    );
+    return $field_groups;
   }
 
   public function getMachineNames() {
     $machine_names = array();
     $field_groups = $this->getFieldGroups();
 
-    $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
-    $field_groups = isset($field_groups) ? $storage_controller->loadMultiple($field_groups) : array();
-    foreach($field_groups as $entity) {
-      $machine_name = $entity->machine_name;
-      $machine_names[$machine_name] = $machine_name;
+    // $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
+    // $field_groups = isset($field_groups) ? $storage_controller->loadMultiple($field_groups) : array();
+    foreach($field_groups as $field_group) {
+      $machine_names[$field_group->machine_name] = $field_group->id;
     }
-    return array_keys($machine_names);
+    return $machine_names;
   }
 
   public function getDraggableFields() {
@@ -183,89 +212,276 @@ class FieldGroupFieldUi {
 
 
 
-
-  /**
-   * Form submission handler for multistep buttons.
-   */
-  public function multistepSubmit($form, &$form_state) {
-    $trigger = $form_state['triggering_element'];
-    $op = $trigger['#op'];
-
-    switch ($op) {
-      case 'edit':
-      dsm('edit');
-        // Store the field whose settings are currently being edited.
-        $field_name = $trigger['#field_name'];
-        $form_state['plugin_settings_edit'] = $field_name;
-        break;
-
-      case 'update':
-        // Store the saved settings, and set the field back to 'non edit' mode.
-        $field_name = $trigger['#field_name'];
-        $values = $form_state['values']['fields'][$field_name]['settings_edit_form']['settings'];
-        $form_state['plugin_settings'][$field_name] = $values;
-        unset($form_state['plugin_settings_edit']);
-        break;
-
-      case 'cancel':
-        // Set the field back to 'non edit' mode.
-        unset($form_state['plugin_settings_edit']);
-        break;
-
-      case 'refresh_table':
-        // If the currently edited field is one of the rows to be refreshed, set
-        // it back to 'non edit' mode.
-        $updated_rows = explode(' ', $form_state['values']['refresh_rows']);
-        if (isset($form_state['plugin_settings_edit']) && in_array($form_state['plugin_settings_edit'], $updated_rows)) {
-          unset($form_state['plugin_settings_edit']);
-        }
-        break;
-    }
-
-    $form_state['rebuild'] = TRUE;
+  private function getId() {
+    return $this->entity_type . '.' . $this->bundle . '.' . $this->display_mode . '.' . $this->view_mode;
   }
+
   /**
-   * Ajax handler for multistep buttons.
+   * Generate fieldgroup isntances for field_ui.
    */
-  public function multistepAjax($form, &$form_state) {
-    $trigger = $form_state['triggering_element'];
-    $op = $trigger['#op'];
+  public function getFieldgroupInstance($keys = array()) {
+    $groups = array();
 
-    // dsm($op);
-    // dsm($trigger['#field_name']);
-    // Pick the elements that need to receive the ajax-new-content effect.
-    switch ($op) {
-      case 'edit':
-        $updated_rows = array($trigger['#field_name']);
-        $updated_columns = array('widget_type');
-        break;
+    foreach($keys as $delta => $name) {
+      $id = 'field_group.' . $name;
+      $field_group = \Drupal::config($id)->get();
 
-      case 'update':
-      case 'cancel':
-        $updated_rows = array($trigger['#field_name']);
-        $updated_columns = array('plugin', 'settings_summary', 'settings_edit');
-        break;
-
-      case 'refresh_table':
-        $updated_rows = array_values(explode(' ', $form_state['values']['refresh_rows']));
-        $updated_columns = array('settings_summary', 'settings_edit');
-        break;
+      $groups[$field_group['machine_name']] = array(
+        '#attributes' => array(
+          'class' => array(
+            'draggable',
+            'field-group',
+            'new-group2',
+          ),
+        ),
+        '#row_type' => 'field_group',
+        '#region_callback' => 'field_group_field_overview_row_region',
+        // '#js_settings' => array(
+        //   'rowHandler' => 'field_group',
+        //   'defaultPlugin' => 'div',
+        // ),
+        'human_name' => array(
+          // TODO: should be dynamically.
+          '#markup' => $field_group['label'],
+        ),
+        'weight' => array(
+          '#type' => 'textfield',
+          // TODO: Save and reade weight attribtue.
+          '#default_value' => '2',
+          '#size' => 3,
+          '#attributes' => array(
+            'class' => array(
+              'field-weight',
+            ),
+          ),
+          '#title_display' => 'invisible',
+          '#title' => 'Weight for ' + $name,
+        ),
+        'parent_wrapper' => array(
+          'parent' => array(
+            '#type' => 'select',
+            '#title' => 'Parent for ' + $name,
+            '#title_display' => 'invisible',
+            '#options' => array(),
+            '#empty_value' => '',
+            '#attributes' => array(
+              'class' => array(
+                'field-parent',
+              ),
+            ),
+            '#parents' => array(
+              'fields',
+              $name,
+              'parent',
+            ),
+          ),
+          'hidden_name' => array(
+            '#type' => 'hidden',
+            '#default_value' => $name,
+            '#attributes' => array(
+              'class' => array(
+                'field-name',
+              ),
+            ),
+          ),
+        ),
+        'label' => array(
+          // '#type' => 'select',
+          // '#title' => 'Label display for Image',
+          // '#title_display' => 'invisible',
+          // '#options' => array(
+          //   'above' => 'Above',
+          //   'inline' => 'Inline',
+          //   'hidden' => '- Hidden -'
+          // ),
+          // '#default_value' => 'above',
+          '#markup' => 'No settings available yet',
+        ),
+        // 'type' => array(
+        //   // TODO: Should be the selected Widget?
+        //   '#markup' => 'Field Group',
+        // ),
+        'plugin' => array(
+          'type' => array(
+            // TODO: This should be dynamically.
+            '#type' => 'select',
+            '#title' => 'Widget for new field group',
+            '#title_display' => 'invisible',
+            '#default_value' => \Drupal::config($id)->get('widget_type'),
+            '#options' => field_group_widget_options(),
+            // TODO: Check how to make this translatable.
+            '#empty_option' => '- Select a field group type -',
+            '#description' => 'Form element to edit the data.',
+            '#parents' => array(
+              'fields',
+              $name,
+              'type'
+            ),
+            '#attributes' => array(
+              'class' => array(
+                ' field-plugin-type',
+              ),
+            ),
+          ),
+          // 'settings_edit_form' => array(),
+          'settings_edit_form' => array(),
+          '#title' => 'Widget for Fieldgroup',
+          // '#cell_attributes' => array(
+          //   'colspan' => 1,
+          // ),
+          // '#prefix' => '<div class="add-new-placeholder"> </div>',
+        ),
+        'settings_summary' => array(
+          '#prefix' => '<div class="field-plugin-summary">',
+          '#markup' => 'We need some generic method to generate this.',
+          '#sufix' => '</div>',
+          '#cell_attributes' => array(
+            'class' => array(
+              'field-plugin-summary-cell',
+            ),
+          ),
+        ),
+        // 'operations' => array(
+        //   '#markup' => l('delete', 'field_group/delete'),
+        // ),
+      );
     }
 
-    foreach ($updated_rows as $name) {
-      foreach ($updated_columns as $key) {
-        dsm('FOO');
-        $element = &$form['fields'][$name][$key];
+    return $groups;
 
-        $element['#prefix'] = '<div class="ajax-new-content">' . (isset($element['#prefix']) ? $element['#prefix'] : '');
-        $element['#suffix'] = (isset($element['#suffix']) ? $element['#suffix'] : '') . '</div>';
-        dsm($element);
+  }
+
+  public function getRowRegion($row) {
+    switch ($row['#row_type']) {
+      case 'add_new_field':
+        return 'hidden';
+    }
+  }
+
+  public function field_group_add_group() {
+    $name = '_add_new_field_group';
+
+    return array(
+      '#attributes' => array(
+        'class' => array(
+          'draggable',
+          // 'tabledrag-leaf',
+          'add-new',
+        ),
+      ),
+      '#row_type' => 'add_new_field',
+      '#region_callback' => array($this, 'getRowRegion'),
+      'label' => array(
+        '#type' => 'textfield',
+        '#title' => 'New field label',
+        '#title_display' => 'invisible',
+        '#size' => 15,
+        '#description' => 'Label',
+        '#prefix' => '<div class="label-input"><div class="add-new-placeholder">Add new field group</div>',
+        '#suffix' => '</div>',
+      ),
+      'weight' => array(
+        '#type' => 'textfield',
+        '#default_value' => 4,
+        '#size' => 3,
+        '#title_display' => 'invisible',
+        '#title' => 'Weight for new field',
+        '#attributes' => array(
+          'class' => array(
+            'field-weight',
+          ),
+        ),
+        '#prefix' => '<div class="add-new-placeholder"> </div>',
+      ),
+      'parent_wrapper' => array(
+        'parent' => array(
+          '#type' => 'select',
+          '#title' => t('Parent for default field'),
+          '#title_display' => 'invisible',
+          '#options' => array(),
+          '#empty_value' => '',
+          '#attributes' => array(
+            'class' => array(
+              'field-parent'
+            ),
+          ),
+          '#prefix' => '<div class="add-new-placeholder">&nbsp;</div>',
+          '#parents' => array(
+            'fields',
+            $name,
+            'parent'
+          ),
+        ),
+        'hidden_name' => array(
+          '#type' => 'hidden',
+          '#default_value' => $name,
+          '#attributes' => array(
+            'class' => array(
+              'field-name'
+            ),
+          ),
+        ),
+      ),
+      'field_name' => array(
+        '#type' => 'machine_name',
+        '#title' => 'New field name',
+        '#title_display' => 'invisible',
+        '#field_prefix' => '<span dir="ltr">field_group_',
+        '#field_suffix' => '</span>‎',
+        '#size' => 15,
+        '#description' => 'A unique machine-readable name containing letters, numbers, and underscores.',
+        '#maxlength' => 26,
+        '#prefix' => '<div class="add-new-placeholder"> </div>',
+        '#machine_name' => array(
+          'source' => array(
+            'fields',
+            '_add_new_field_group',
+            'label',
+          ),
+          'exists' => '_field_group_field_name_exists',
+          'standalone' => TRUE,
+          'label' => '',
+        ),
+        '#required' => FALSE,
+      ),
+      'type' => array(),
+      'widget_type' => array(
+        '#type' => 'select',
+        '#title' => 'Widget for new field group',
+        '#title_display' => 'invisible',
+        '#options' => $this->field_group_widget_options(),
+        // TODO: Check how to make this translatable.
+        '#empty_option' => '- Select a field group type -',
+        '#description' => 'Form element to edit the data.',
+        '#attributes' => array(
+          'class' => array(
+            'widget-type-select',
+          ),
+        ),
+        '#cell_attributes' => array(
+          'colspan' => 3,
+        ),
+        '#prefix' => '<div class="add-new-placeholder"> </div>',
+      ),
+      'translatable' => array(
+        '#type' => 'value',
+        '#value' => FALSE,
+      ),
+    );
+  }
+
+  private function field_group_widget_options() {
+    $widget_options = array();
+    $widgets = \Drupal::service('plugin.manager.field_group')->getDefinitions();
+    // dsm($widgets);
+    // dsm(\Drupal::service('plugin.manager.field_group')->getDefinitions());
+    foreach($widgets as $widget_name => $widget) {
+      $field_type = key(array_flip($widget['field_types']));
+      if($field_type == 'field_group') {
+        $widget_options[$widget_name] = $widget_name;
       }
     }
-
-    // Return the whole table.
-    return $form['fields'];
+    return $widget_options;
   }
-
 
 }

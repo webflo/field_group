@@ -48,6 +48,7 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
 
 
 
+
   $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
   $field_group_field_ui = new FieldGroupFieldUi($storage_controller);
   $fields = array(
@@ -56,20 +57,24 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
   );
   $field_group_field_ui->setFormData($fields, $entity_type, $bundle, $display_mode, $view_mode);
 
+  dsm($field_group_field_ui->createFieldGroup(array('id' => 'fielg_group_dolle_gruppe')));
+
+
+
   // Get existing fieldgroups.
-  $field_group = new FieldGroup($entity_type, $bundle, $display_mode, $view_mode);
-  $existing_field_groups = $field_group->getFieldGroups();
+  // $field_group = new FieldGroup($entity_type, $bundle, $display_mode, $view_mode);
+  $existing_field_groups = $field_group_field_ui->getMachineNames();
+  // dsm($existing_field_groups);
 
-
-  $add_group = new FieldGroupAddGroup();
-  $form['fields']['_add_new_field_group'] = $add_group->field_group_add_group();
+  // $add_group = new FieldGroupAddGroup();
+  $form['fields']['_add_new_field_group'] = $field_group_field_ui->field_group_add_group();
 
 
   $machine_names = $field_group_field_ui->getMachineNames();
   $draggable_fields = $field_group_field_ui->getDraggableFields();
 
   // // dsm($form['fields']['field_image']['settings_edit']);
-  foreach($field_group->getFieldgroupInstance($machine_names) as $group_name => $group) {
+  foreach($field_group_field_ui->getFieldgroupInstance($machine_names) as $group_name => $group) {
     $form['#fields'][] = $group_name;
     $form['fields'][$group_name] = $group;
     $form['fields'][$group_name]['settings_edit'] = array(
@@ -106,16 +111,18 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
     );
     // dsm($form['fields'][$group_name]);
   }
+  dsm($form);
 
   // TODO: THis needs to be generic. Looks like a huge amount of work -.-"
-  if($form_state['plugin_settings_edit'] == 'field_group_what_about_that') {
+  $testfield = 'field_group_neue_gruppe_yeay';
+  if($form_state['plugin_settings_edit'] == $testfield) {
     $insance = Drupal::service('plugin.manager.field_group')->createInstance('fieldset');
     $settings_form = $insance->settingsForm($form, $form_state);
-    unset($form['fields']['field_group_what_about_that']['plugin']['type']);
+    unset($form['fields'][$testfield]['plugin']['type']);
     // $form['fields']['field_group_what_about_that']['plugin']['settings_edit_form'] = $settings;
 
 
-    $field_id = 'field_group_what_about_that';
+    $field_id = $testfield;
     // Base button element for the various plugin settings actions.
     $base_button = array(
       '#submit' => array(array($form_state['build_info']['callback_object'], 'multistepSubmit')),
@@ -127,7 +134,7 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
       '#field_name' => $field_id,
     );
 
-    $form['fields']['field_group_what_about_that']['plugin']['settings_edit_form'] += array(
+    $form['fields'][$testfield]['plugin']['settings_edit_form'] += array(
       '#type' => 'container',
       '#attributes' => array('class' => array('field-plugin-settings-edit-form')),
       '#parents' => array('fields', $field_id, 'settings_edit_form'),
@@ -154,11 +161,11 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
         ),
       ),
     );
-    $form['fields']['field_group_what_about_that']['plugin']['#cell_attributes'] = array(
+    $form['fields'][$testfield]['plugin']['#cell_attributes'] = array(
       'colspan' => 3,
     );
-    unset($form['fields']['field_group_what_about_that']['settings_edit']);
-    unset($form['fields']['field_group_what_about_that']['settings_summary']);
+    unset($form['fields'][$testfield]['settings_edit']);
+    unset($form['fields'][$testfield]['settings_summary']);
   }
 
   // dsm($form);
@@ -172,25 +179,36 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
 
   // Add the parent parameters.
   // TODO: This may needs to be refactored.
-  foreach($existing_field_groups as $id => $id) {
-    $field_parent = config('field_group.' . $id)->get('machine_name');
-    $fields = config('field_group.' . $id)->get('fields');
+  foreach($existing_field_groups as $delta => $id) {
+    $field_parent = Drupal::config('field_group.' . $id)->get('machine_name');
+    $fields = Drupal::config('field_group.' . $id)->get('fields');
     if(!empty($fields)) {
       foreach ($fields as $field_name => $field_name) {
-        if($field_name != $field_parent) {
+        if($field_name != $field_parent && isset($form['fields'][$field_name])) {
+          // dsm($form['fields'][$field_name]);
+          // dsm($field_parent);
+          // dsm($field_name);
           $form['fields'][$field_name]['parent_wrapper']['parent']['#value'] = $field_parent;
         }
       }
     }
   }
 
+  // $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
+  // dsm($storage_controller->load('node.article.view.default.field_group_neue_gruppe_yeay'));
+
+  // $form['fields']['field_test']['parent_wrapper']['parent']['#value'] = '0';
+
   // Prepare options to make them draggable to field_groups.
   $options = array();
-  $option = $field_group->getFieldgroupInstance($machine_names);
+  $option = $field_group_field_ui->getFieldgroupInstance($machine_names);
   $option = (array) array_keys($option);
+  $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
   foreach($option as $delta => $key) {
-    $options[$key] = $key;
+    $entity = $storage_controller->load($key);
+    $options[$entity->machine_name] = $entity->machine_name;
   }
+  dsm($options);
   // Add _add_new_field_group to options, to be able to nest fields on-the-flow.
   $options['_add_new_field_group'] = '_add_new_field_group';
   // Add options to the fields.
@@ -206,7 +224,10 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
   // Use custom submit function.
   // TODO: The submit function is storing the field_groups and may need to be added to
   //       the FieldGroup class instead of the UI class.
+
   $form['#submit'][] = array($field_group_field_ui, 'submitForm');
+  // dsm($form);
+  // unset($form['fields']['field_asdfgh']['parent_wrapper']['parent']['#value']);
 }
 
 
@@ -328,16 +349,24 @@ function field_group_attach_groups(&$build, $entity, $display) {
   $view_mode = $display->mode;
 
 
-  $field_group = new FieldGroup($entity_type, $bundle, $display_mode, $view_mode);
-  $existing_field_groups = $field_group->getFieldGroups();
+  // $field_group = new FieldGroup($entity_type, $bundle, $display_mode, $view_mode);
 
-  // dsm(config(reset($existing_field_groups)));
+  $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
+  $field_group_field_ui = new FieldGroupFieldUi($storage_controller);
+  $fields = array(
+    'fields' => $form['#fields'],
+    'extra' => $form['#extra']
+  );
+  $field_group_field_ui->setFormData($fields, $entity_type, $bundle, $display_mode, $view_mode);
+  $existing_field_groups = $field_group_field_ui->getMachineNames();
+  // dsm($existing_field_groups);
+  // dsm(Drupal::config(reset($existing_field_groups)));
 
   // WRAP FIELDS INTO FIELDGROUPS!!
   foreach ($existing_field_groups as $key => $key) {
-    $widget_type = config('field_group.' . $key)->get('widget_type');
-    $fields = config('field_group.' . $key)->get('fields');
-    $machine_name = config('field_group.' . $key)->get('machine_name');
+    $widget_type = Drupal::config('field_group.' . $key)->get('widget_type');
+    $fields = Drupal::config('field_group.' . $key)->get('fields');
+    $machine_name = Drupal::config('field_group.' . $key)->get('machine_name');
     $children = array();
     $build[$machine_name] = array(
       '#type' => 'field_group',
