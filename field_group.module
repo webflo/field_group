@@ -51,13 +51,14 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
 
   $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
   $field_group_field_ui = new FieldGroupFieldUi($storage_controller);
+  // We need to get rid of this somehow.
   $fields = array(
     'fields' => $form['#fields'],
     'extra' => $form['#extra']
   );
   $field_group_field_ui->setFormData($fields, $entity_type, $bundle, $display_mode, $view_mode);
 
-  dsm($field_group_field_ui->createFieldGroup(array('id' => 'fielg_group_dolle_gruppe')));
+  // dsm($field_group_field_ui->createFieldGroup(array('id' => 'fielg_group_dolle_gruppe')));
 
 
 
@@ -74,10 +75,12 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
   $draggable_fields = $field_group_field_ui->getDraggableFields();
 
   // // dsm($form['fields']['field_image']['settings_edit']);
-  foreach($field_group_field_ui->getFieldgroupInstance($machine_names) as $group_name => $group) {
-    $form['#fields'][] = $group_name;
-    $form['fields'][$group_name] = $group;
-    $form['fields'][$group_name]['settings_edit'] = array(
+  $form['#field_groups'] = array();
+  foreach($field_group_field_ui->getFieldgroupInstance($machine_names) as $field_group_name => $group) {
+    $form['#field_groups'][$field_group_name] = $group;
+    // dsm($group);
+    $form['fields'][$field_group_name] = $group;
+    $form['fields'][$field_group_name]['settings_edit'] = array(
       '#submit' => array(
         array($form_state['build_info']['callback_object'], 'multistepSubmit'),
         // array($field_group_field_ui, 'multistepSubmit'),
@@ -88,7 +91,7 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
         'wrapper' => 'field-display-overview-wrapper',
         'effect' => 'fade',
       ),
-      '#field_name' => $group_name, // 'field_group-' + $group_name, //'field_test',
+      '#field_name' => $field_group_name, // 'field_group-' + $group_name, //'field_test',
       '#type' => 'image_button',
       '#name' => 'field_image_settings_edit',
       '#src' => 'core/misc/configure-dark.png',
@@ -102,7 +105,7 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
       '#limit_validation_errors' => array(
         0 => array(
           0 => 'fields',
-          1 => $group_name,
+          1 => $field_group_name,
           2 => 'type'
         )
       ),
@@ -111,7 +114,7 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
     );
     // dsm($form['fields'][$group_name]);
   }
-  dsm($form);
+  // dsm($form);
 
   // TODO: THis needs to be generic. Looks like a huge amount of work -.-"
   $testfield = 'field_group_neue_gruppe_yeay';
@@ -172,20 +175,20 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
   // dsm($form_state);
 
   // dsm($form['fields']['field_group_test']);
-  dsm($form['fields']['field_test']);
-  dsm($form['fields']['field_test']['plugin']['settings_edit_form']);
+  // dsm($form['fields']['field_test']);
+  // dsm($form['fields']['field_test']['plugin']['settings_edit_form']);
   // dsm($form['fields']['field_image']);
   // dsm($form['fields']['field_summary']);
 
   // Add the parent parameters.
   // TODO: This may needs to be refactored.
   foreach($existing_field_groups as $delta => $id) {
-    $field_parent = Drupal::config('field_group.' . $id)->get('machine_name');
+    $field_parent = Drupal::config('field_group.' . $id)->get('field_group_name');
     $fields = Drupal::config('field_group.' . $id)->get('fields');
     if(!empty($fields)) {
-      foreach ($fields as $field_name => $field_name) {
+      foreach ($fields as $delta => $field_name) {
         if($field_name != $field_parent && isset($form['fields'][$field_name])) {
-          // dsm($form['fields'][$field_name]);
+          // // dsm($form['fields'][$field_name]);
           // dsm($field_parent);
           // dsm($field_name);
           $form['fields'][$field_name]['parent_wrapper']['parent']['#value'] = $field_parent;
@@ -201,14 +204,10 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
 
   // Prepare options to make them draggable to field_groups.
   $options = array();
-  $option = $field_group_field_ui->getFieldgroupInstance($machine_names);
-  $option = (array) array_keys($option);
   $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
-  foreach($option as $delta => $key) {
-    $entity = $storage_controller->load($key);
-    $options[$entity->machine_name] = $entity->machine_name;
+  foreach($machine_names as $machine_name => $key) {
+    $options[$machine_name] = $machine_name;
   }
-  dsm($options);
   // Add _add_new_field_group to options, to be able to nest fields on-the-flow.
   $options['_add_new_field_group'] = '_add_new_field_group';
   // Add options to the fields.
@@ -224,6 +223,21 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
   // Use custom submit function.
   // TODO: The submit function is storing the field_groups and may need to be added to
   //       the FieldGroup class instead of the UI class.
+
+  $entity_type = $form['#entity_type'];
+  $bundle = $form['#bundle'];
+  $display_mode = ($form_id == 'field_ui_display_overview_form') ? 'view' : FALSE;
+  $display_mode = ($form_id == 'field_ui_form_display_overview_form') ? 'form' : $display_mode;
+  $view_mode = $form['#mode'];
+
+  $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
+  $field_group_field_ui = new FieldGroupFieldUi($storage_controller);
+  // We need to get rid of this somehow.
+  $fields = array(
+    'fields' => $form['#fields'],
+    'extra' => $form['#extra']
+  );
+  $field_group_field_ui->setFormData($fields, $entity_type, $bundle, $display_mode, $view_mode);
 
   $form['#submit'][] = array($field_group_field_ui, 'submitForm');
   // dsm($form);
@@ -242,10 +256,13 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
  */
 function _field_group_field_name_exists($value) {
   // Prefix with 'field_'.
+  if(empty($value)) {
+    return FALSE;
+  }
   $field_name = 'field_group_' . $value;
 
   $exists = Drupal::entityQuery('field_group')
-   ->condition('machine_name', $value)
+   ->condition('field_group_name', $value)
    ->execute();
    // TODO: This is not working yet.
   if(!empty($exists)) {
@@ -364,9 +381,9 @@ function field_group_attach_groups(&$build, $entity, $display) {
 
   // WRAP FIELDS INTO FIELDGROUPS!!
   foreach ($existing_field_groups as $key => $key) {
-    $widget_type = Drupal::config('field_group.' . $key)->get('widget_type');
+    $widget_type = Drupal::config('field_group.' . $key)->get('type');
     $fields = Drupal::config('field_group.' . $key)->get('fields');
-    $machine_name = Drupal::config('field_group.' . $key)->get('machine_name');
+    $machine_name = Drupal::config('field_group.' . $key)->get('field_group_name');
     $children = array();
     $build[$machine_name] = array(
       '#type' => 'field_group',

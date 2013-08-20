@@ -53,14 +53,15 @@ class FieldGroup extends ConfigEntityBase implements FieldGroupInterface {
   public $display_mode;
   public $view_mode;
 
-  public $widget_type;
+  public $type;
   public $parent;
 
-  public $machine_name;
+  public $field_group_name;
   public $fields;
 
   public $field_order;
   public $field_groups;
+  public $weight;
 
   // Override methods from ConfigEntityBase as needed.
 
