@@ -16,18 +16,16 @@ class FieldGroupFieldUi {
 
   protected $storageController;
 
-
-  private $entity_type;
-  private $bundle;
-  private $display_mode;
-  private $view_mode;
-  // private $form_state;
+  protected $entity_type;
+  protected $bundle;
+  protected $display_mode;
+  protected $view_mode;
 
   public function __construct(EntityStorageControllerInterface $storage_controller) {
     $this->storageController = $storage_controller;
   }
 
-  public function setFormData($entity_type, $bundle, $display_mode, $view_mode) {
+  public function setProperties($entity_type, $bundle, $display_mode, $view_mode) {
     $this->entity_type = $entity_type;
     $this->bundle = $bundle;
     $this->display_mode = $display_mode;
@@ -120,19 +118,6 @@ class FieldGroupFieldUi {
   }
 
 
-  private function getEntityType() {
-    return $this->entity_type;
-  }
-  private function getBundle() {
-    return $this->bundle;
-  }
-  private function getDisplayMode() {
-    return $this->display_mode;
-  }
-  private function getViewMode() {
-    return $this->view_mode;
-  }
-
   /**
    * Fetch fieldGroup id's by given properies.
    */
@@ -161,6 +146,7 @@ class FieldGroupFieldUi {
     return $machine_names;
   }
 
+
   public function getDraggableFields($form) {
     $fieldGroupKeys = array_keys($this->getMachineNames());
     return array_merge($form['#fields'], $form['#extra'], array(
@@ -172,12 +158,6 @@ class FieldGroupFieldUi {
     );
   }
 
-
-
-
-  private function getId() {
-    return $this->entity_type . '.' . $this->bundle . '.' . $this->display_mode . '.' . $this->view_mode;
-  }
 
   /**
    * Generate fieldgroup isntances for field_ui.

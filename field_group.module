@@ -51,7 +51,7 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
 
   $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
   $field_group_field_ui = new FieldGroupFieldUi($storage_controller);
-  $field_group_field_ui->setFormData($entity_type, $bundle, $display_mode, $view_mode);
+  $field_group_field_ui->setProperties($entity_type, $bundle, $display_mode, $view_mode);
 
   // dsm($field_group_field_ui->createFieldGroup(array('id' => 'fielg_group_dolle_gruppe')));
 
@@ -88,7 +88,7 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
       ),
       '#field_name' => $field_group_name, // 'field_group-' + $group_name, //'field_test',
       '#type' => 'image_button',
-      '#name' => 'field_image_settings_edit',
+      '#name' => $field_group_name . '_settings_edit',
       '#src' => 'core/misc/configure-dark.png',
       '#attributes' => array(
         'class' => array(
@@ -237,7 +237,7 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
   $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
   $field_group_field_ui = new FieldGroupFieldUi($storage_controller);
 
-  $field_group_field_ui->setFormData($entity_type, $bundle, $display_mode, $view_mode);
+  $field_group_field_ui->setProperties($entity_type, $bundle, $display_mode, $view_mode);
 
   $form['#submit'][] = array($field_group_field_ui, 'submitForm');
   // dsm($form);
@@ -371,7 +371,7 @@ function field_group_attach_groups(&$build, $entity, $display) {
   $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
   $field_group_field_ui = new FieldGroupFieldUi($storage_controller);
 
-  $field_group_field_ui->setFormData($entity_type, $bundle, $display_mode, $view_mode);
+  $field_group_field_ui->setProperties($entity_type, $bundle, $display_mode, $view_mode);
 
   foreach($field_group_field_ui->getFieldGroups() as $group_id => $group) {
     $build[$group->field_group_name] = array(
