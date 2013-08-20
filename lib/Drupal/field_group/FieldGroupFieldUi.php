@@ -45,15 +45,12 @@ class FieldGroupFieldUi {
    */
   public function submitForm(&$form, &$form_state) {
     $values = $form_state['input']['fields'];
-    // dsm($form_state);
 
-    // // dsm($form_state);
 
-    // // TODO: SAVE EMPTY FIELD GROUPS.
-    $save_to_field_group = array();
-    // $parent = '';
-    // $already_saved = array();
-    // TODO: Save field group changes on existing ones.
+    // First clear all fields in every group to catch empty groups.
+    foreach($this->getFieldGroups() as $id => $field_group) {
+      $values[$field_group->field_group_name]['fields'] = array();
+    }
     foreach ($this->getDraggableFields() as $delta => $field_name) {
       // dsm($values[$field_name]);
       if(!empty($values[$field_name]['parent'])) {
@@ -72,35 +69,7 @@ class FieldGroupFieldUi {
       $this->updateFieldGroup($values[$field_group_name]);
     }
 
-    // // TODO: This is still crappy. Empty field groups are not stored correctly.
-    // // TODO: Make it possible to save _add_new_field_group together with nested fields.
-    // //       This might become a little tricky :/
-    // $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
-    // // Save existing field_groups.
-    // foreach ($save_to_field_group as $field_group_id => $value) {
-    //   // $id = $this->getEntityType() . '.' . $this->getBundle() . '.' . $this->getDisplayMode() . '.' . $this->getViewmode() . '.' . $field_group_id;
-    //   $id = $field_group_id;
-    //   dsm($field_group_id);
-    //   $already_saved += array($id => $id);
-    //   // dsm($id);
-    //   $entity = $storage_controller->load($id);
-    //   // dsm($entity);
-    //   $entity->set('parent', $parent);
-    //   $entity->set('fields', $value);
-    //   $entity->set('widget_type', $values[$field_group_id]['type']);
-    //   $entity->save($entity);
-    // }
 
-    // // We assume that a field_group which is not saved above, is an empty one.
-    // foreach ($this->getMachineNames() as $key => $key) {
-    //   if(!in_array($key, $already_saved)) {
-    //     $entity = $storage_controller->load($key);
-    //     $entity->set('parent', $parent);
-    //     $entity->set('fields', array());
-    //     $entity->set('widget_type', $values[$key]['type']);
-    //     $entity->save($entity);
-    //   }
-    // }
   }
 
   /**
@@ -147,44 +116,6 @@ class FieldGroupFieldUi {
     $storageController->delete($fieldGroups);
   }
 
-  /**
-   * This should be saveFieldgroup()
-   *
-   * TODO: We need a
-   *        - updateFieldGroup
-   *        - saveFieldGroup
-   *        - deleteFieldGroup
-   *
-   */
-  // private function addNewFieldGroup($values, $fields) {
-  //   $machine_name = 'field_group_' . $values['field_group_name'];
-  //   $field_group_id = $this->getEntityType() . '.' . $this->getBundle() . '.' . $this->getDisplayMode() . '.' . $this->getViewmode() . '.' . $machine_name;
-
-  //   $widget_type = $values['type'];
-  //   $parent = $values['parent'];
-  //   dsm($parent);
-
-  //   $uuid = new Uuid();
-  //   $field_group = array(
-  //     'id' => $field_group_id,
-  //     // 'field_order' => $field_order,
-  //     // 'field_groups' => $field_group,
-  //     'entity_type' => $this->getEntityType(),
-  //     'bundle' => $this->getBundle(),
-  //     'display_mode' => $this->getDisplayMode(),
-  //     'view_mode' => $this->getViewMode(),
-  //     'widget_type' => $widget_type,
-  //     'fields' => $fields,
-  //     'parent' => $parent,
-  //     'machine_name' => $machine_name,
-  //     'uuid' => $uuid->generate(),
-  //     'label' => 'test',
-  //   );
-
-  //   $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
-  //   $entity = $storage_controller->create($field_group);
-  //   $entity->save();
-  // }
 
   private function getEntityType() {
     return $this->entity_type;
