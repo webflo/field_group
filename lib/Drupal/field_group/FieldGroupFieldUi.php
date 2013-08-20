@@ -14,24 +14,21 @@ use Drupal\Core\Entity\EntityStorageControllerInterface;
  */
 class FieldGroupFieldUi {
 
-  protected $storageController;
-
   protected $entity_type;
   protected $bundle;
   protected $display_mode;
   protected $view_mode;
 
-  public function __construct(EntityStorageControllerInterface $storage_controller) {
-    $this->storageController = $storage_controller;
-  }
-
-  public function setProperties($entity_type, $bundle, $display_mode, $view_mode) {
+  public function __construct($entity_type, $bundle, $display_mode, $view_mode) {
     $this->entity_type = $entity_type;
     $this->bundle = $bundle;
     $this->display_mode = $display_mode;
     $this->view_mode = $view_mode;
   }
 
+  private function getStorageController() {
+    return \Drupal::entityManager()->getStorageController('field_group');
+  }
 
   /**
    * This one needs a rewrite...
@@ -86,14 +83,14 @@ class FieldGroupFieldUi {
     $values['view_mode'] = $this->view_mode;
     $values['field_group_name'] = 'field_group_' . $values['field_group_name'];
 
-    $storageController = \Drupal::entityManager()->getStorageController('field_group');
-    $entity = $storageController->create($values);
+    // $storageController = \Drupal::entityManager()->getStorageController('field_group');
+    $entity = $this->getStorageController()->create($values);
     return $entity->save();
   }
 
   private function updateFieldGroup($values) {
-    $storageController = \Drupal::entityManager()->getStorageController('field_group');
-    $entity = $storageController->loadByProperties(
+    // $storageController = \Drupal::entityManager()->getStorageController('field_group');
+    $entity = $this->getStorageController()->loadByProperties(
       array(
         'field_group_name' => $values['field_group_name'],
         'entity_type' => $this->entity_type,
@@ -113,8 +110,8 @@ class FieldGroupFieldUi {
     $this->deleteFieldGroupsMultiple(array($fieldGroup));
   }
   private function deleteFieldGroupsMultiple($fieldGroups) {
-    $storageController = \Drupal::entityManager()->getStorageController('field_group');
-    $storageController->delete($fieldGroups);
+    // $storageController = \Drupal::entityManager()->getStorageController('field_group');
+    $this->getStorageController()->delete($fieldGroups);
   }
 
 
@@ -122,8 +119,8 @@ class FieldGroupFieldUi {
    * Fetch fieldGroup id's by given properies.
    */
   public function getFieldGroups() {
-    $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
-    $field_groups = $storage_controller->loadByProperties(
+    // $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
+    $field_groups = $this->getStorageController()->loadByProperties(
       array(
         'entity_type' => $this->entity_type,
         'bundle' => $this->bundle,

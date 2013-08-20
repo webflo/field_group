@@ -49,9 +49,7 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
 
 
 
-  $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
-  $field_group_field_ui = new FieldGroupFieldUi($storage_controller);
-  $field_group_field_ui->setProperties($entity_type, $bundle, $display_mode, $view_mode);
+  $field_group_field_ui = new FieldGroupFieldUi($entity_type, $bundle, $display_mode, $view_mode);
 
   // dsm($field_group_field_ui->createFieldGroup(array('id' => 'fielg_group_dolle_gruppe')));
 
@@ -234,11 +232,7 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
   $display_mode = ($form_id == 'field_ui_form_display_overview_form') ? 'form' : $display_mode;
   $view_mode = $form['#mode'];
 
-  $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
-  $field_group_field_ui = new FieldGroupFieldUi($storage_controller);
-
-  $field_group_field_ui->setProperties($entity_type, $bundle, $display_mode, $view_mode);
-
+  $field_group_field_ui = new FieldGroupFieldUi($entity_type, $bundle, $display_mode, $view_mode);
   $form['#submit'][] = array($field_group_field_ui, 'submitForm');
   // dsm($form);
   // unset($form['fields']['field_asdfgh']['parent_wrapper']['parent']['#value']);
@@ -368,10 +362,7 @@ function field_group_attach_groups(&$build, $entity, $display) {
 
   // $field_group = new FieldGroup($entity_type, $bundle, $display_mode, $view_mode);
 
-  $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
-  $field_group_field_ui = new FieldGroupFieldUi($storage_controller);
-
-  $field_group_field_ui->setProperties($entity_type, $bundle, $display_mode, $view_mode);
+  $field_group_field_ui = new FieldGroupFieldUi($entity_type, $bundle, $display_mode, $view_mode);
 
   foreach($field_group_field_ui->getFieldGroups() as $group_id => $group) {
     $build[$group->field_group_name] = array(
