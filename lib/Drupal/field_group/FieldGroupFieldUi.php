@@ -17,7 +17,6 @@ class FieldGroupFieldUi {
   protected $storageController;
 
 
-  private $fields;
   private $entity_type;
   private $bundle;
   private $display_mode;
@@ -28,13 +27,11 @@ class FieldGroupFieldUi {
     $this->storageController = $storage_controller;
   }
 
-  public function setFormData($fields, $entity_type, $bundle, $display_mode, $view_mode) {
+  public function setFormData($entity_type, $bundle, $display_mode, $view_mode) {
     $this->entity_type = $entity_type;
     $this->bundle = $bundle;
     $this->display_mode = $display_mode;
     $this->view_mode = $view_mode;
-    $this->fields = $fields;
-    // $this->form_state = $form_state;
   }
 
 
@@ -51,7 +48,7 @@ class FieldGroupFieldUi {
     foreach($this->getFieldGroups() as $id => $field_group) {
       $values[$field_group->field_group_name]['fields'] = array();
     }
-    foreach ($this->getDraggableFields() as $delta => $field_name) {
+    foreach ($this->getDraggableFields($form) as $delta => $field_name) {
       // dsm($values[$field_name]);
       if(!empty($values[$field_name]['parent'])) {
         $parent = $values[$field_name]['parent'];
@@ -164,9 +161,9 @@ class FieldGroupFieldUi {
     return $machine_names;
   }
 
-  public function getDraggableFields() {
+  public function getDraggableFields($form) {
     $fieldGroupKeys = array_keys($this->getMachineNames());
-    return array_merge($this->fields['fields'], $this->fields['extra'], array(
+    return array_merge($form['#fields'], $form['#extra'], array(
         '_add_new_field',
         '_add_existing_field',
         '_add_new_field_group',

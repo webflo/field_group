@@ -51,12 +51,7 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
 
   $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
   $field_group_field_ui = new FieldGroupFieldUi($storage_controller);
-  // We need to get rid of this somehow.
-  $fields = array(
-    'fields' => $form['#fields'],
-    'extra' => $form['#extra']
-  );
-  $field_group_field_ui->setFormData($fields, $entity_type, $bundle, $display_mode, $view_mode);
+  $field_group_field_ui->setFormData($entity_type, $bundle, $display_mode, $view_mode);
 
   // dsm($field_group_field_ui->createFieldGroup(array('id' => 'fielg_group_dolle_gruppe')));
 
@@ -72,7 +67,7 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
 
 
   $machine_names = $field_group_field_ui->getMachineNames();
-  $draggable_fields = $field_group_field_ui->getDraggableFields();
+  $draggable_fields = $field_group_field_ui->getDraggableFields($form);
 
   // // dsm($form['fields']['field_image']['settings_edit']);
   $form['#field_groups'] = array();
@@ -241,12 +236,8 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
 
   $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
   $field_group_field_ui = new FieldGroupFieldUi($storage_controller);
-  // We need to get rid of this somehow.
-  $fields = array(
-    'fields' => $form['#fields'],
-    'extra' => $form['#extra']
-  );
-  $field_group_field_ui->setFormData($fields, $entity_type, $bundle, $display_mode, $view_mode);
+
+  $field_group_field_ui->setFormData($entity_type, $bundle, $display_mode, $view_mode);
 
   $form['#submit'][] = array($field_group_field_ui, 'submitForm');
   // dsm($form);
@@ -380,9 +371,7 @@ function field_group_attach_groups(&$build, $entity, $display) {
   $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
   $field_group_field_ui = new FieldGroupFieldUi($storage_controller);
 
-  // TODO: we need to get rid of the fields shit.
-  $fields = array();
-  $field_group_field_ui->setFormData($fields, $entity_type, $bundle, $display_mode, $view_mode);
+  $field_group_field_ui->setFormData($entity_type, $bundle, $display_mode, $view_mode);
 
   foreach($field_group_field_ui->getFieldGroups() as $group_id => $group) {
     $build[$group->field_group_name] = array(
