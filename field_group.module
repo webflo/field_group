@@ -419,19 +419,6 @@ function field_group_theme() {
   );
 }
 
-function field_group_widget_options() {
-  $widget_options = array();
-
-  $widgets = drupal_container()->get('plugin.manager.field_group')->getDefinitions();
-  foreach($widgets as $widget_name => $widget) {
-    $field_type = key(array_flip($widget['field_types']));
-    if($field_type == 'field_group') {
-      $widget_options[$widget_name] = $widget_name;
-    }
-  }
-  return $widget_options;
-}
-
 
 
 /**

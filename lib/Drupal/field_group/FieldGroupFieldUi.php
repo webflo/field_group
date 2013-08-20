@@ -251,7 +251,7 @@ class FieldGroupFieldUi {
             '#title' => 'Widget for new field group',
             '#title_display' => 'invisible',
             '#default_value' => \Drupal::config($id)->get('type'),
-            '#options' => field_group_widget_options(),
+            '#options' => $this->field_group_widget_options(),
             // TODO: Check how to make this translatable.
             '#empty_option' => '- Select a field group type -',
             '#description' => 'Form element to edit the data.',
