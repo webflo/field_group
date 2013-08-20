@@ -62,6 +62,7 @@ class FieldGroup extends ConfigEntityBase implements FieldGroupInterface {
   public $field_order;
   public $field_groups;
   public $weight;
+  public $plugin_settings;
 
   // Override methods from ConfigEntityBase as needed.
 

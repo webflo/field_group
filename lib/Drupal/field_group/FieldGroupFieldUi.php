@@ -64,10 +64,14 @@ class FieldGroupFieldUi {
 
   }
 
-  public function submitSettingsForm($field_group_name, $values) {
+  public function submitSettingsForm($field_group, $values) {
     // TODO: Save settings to entity.
-    dsm($field_group_name);
-    dsm($values);
+    $values['plugin_settings'] = $values;
+    foreach ($values as $key => $value) {
+      $field_group->set($key, $value);
+    }
+    dsm($field_group);
+    dsm($field_group->save());
   }
 
   /**
