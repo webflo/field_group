@@ -159,14 +159,8 @@ class FieldGroupFieldUi {
   /**
    * Generate fieldgroup isntances for field_ui.
    */
-  public function getFieldgroupInstance($keys = array()) {
-    $groups = array();
-
-    foreach($keys as $delta => $name) {
-      $id = 'field_group.' . $name;
-      $field_group = \Drupal::config($id)->get();
-      $field_group_name = $field_group['field_group_name'];
-      $groups[$field_group['field_group_name']] = array(
+  public function getFieldgroupInstance($form, $form_state, $field_group) {
+    return array(
         '#attributes' => array(
           'class' => array(
             'draggable',
@@ -181,13 +175,11 @@ class FieldGroupFieldUi {
         //   'defaultPlugin' => 'div',
         // ),
         'human_name' => array(
-          // TODO: should be dynamically.
-          '#markup' => $field_group['label'],
+          '#markup' => $field_group->label,
         ),
         'weight' => array(
           '#type' => 'textfield',
-          // TODO: Save and reade weight attribtue.
-          '#default_value' => $field_group['weight'],
+          '#default_value' => $field_group->weight,
           '#size' => 3,
           '#attributes' => array(
             'class' => array(
@@ -195,12 +187,12 @@ class FieldGroupFieldUi {
             ),
           ),
           '#title_display' => 'invisible',
-          '#title' => 'Weight for ' + $field_group_name,
+          '#title' => 'Weight for ' + $field_group->label,
         ),
         'parent_wrapper' => array(
           'parent' => array(
             '#type' => 'select',
-            '#title' => 'Parent for ' + $field_group_name,
+            '#title' => 'Parent for ' + $field_group->label,
             '#title_display' => 'invisible',
             '#options' => array(),
             '#empty_value' => '',
@@ -211,13 +203,13 @@ class FieldGroupFieldUi {
             ),
             '#parents' => array(
               'fields',
-              $field_group_name,
+              $field_group->field_group_name,
               'parent',
             ),
           ),
           'hidden_name' => array(
             '#type' => 'hidden',
-            '#default_value' => $field_group_name,
+            '#default_value' => $field_group->field_group_name,
             '#attributes' => array(
               'class' => array(
                 'field-name',
@@ -237,24 +229,20 @@ class FieldGroupFieldUi {
           // '#default_value' => 'above',
           '#markup' => 'No settings available yet',
         ),
-        // 'type' => array(
-        //   // TODO: Should be the selected Widget?
-        //   '#markup' => 'Field Group',
-        // ),
         'plugin' => array(
           'type' => array(
             // TODO: This should be dynamically.
             '#type' => 'select',
             '#title' => 'Widget for new field group',
             '#title_display' => 'invisible',
-            '#default_value' => \Drupal::config($id)->get('type'),
+            '#default_value' => $field_group->type,
             '#options' => $this->field_group_widget_options(),
             // TODO: Check how to make this translatable.
             '#empty_option' => '- Select a field group type -',
             '#description' => 'Form element to edit the data.',
             '#parents' => array(
               'fields',
-              $field_group_name,
+              $field_group->field_group_name,
               'type'
             ),
             '#attributes' => array(
@@ -263,13 +251,8 @@ class FieldGroupFieldUi {
               ),
             ),
           ),
-          // 'settings_edit_form' => array(),
           'settings_edit_form' => array(),
           '#title' => 'Widget for Fieldgroup',
-          // '#cell_attributes' => array(
-          //   'colspan' => 1,
-          // ),
-          // '#prefix' => '<div class="add-new-placeholder"> </div>',
         ),
         'settings_summary' => array(
           '#prefix' => '<div class="field-plugin-summary">',
@@ -281,13 +264,41 @@ class FieldGroupFieldUi {
             ),
           ),
         ),
+        // TODO: Add delete link somewhere.
         // 'operations' => array(
         //   '#markup' => l('delete', 'field_group/delete'),
         // ),
-      );
-    }
+        'settings_edit' => array(
+          '#submit' => array(array($form_state['build_info']['callback_object'], 'multistepSubmit')),
+          '#ajax' => array(
+            'callback' => array($form_state['build_info']['callback_object'], 'multistepAjax'),
+            // 'callback' => array($field_group_field_ui, 'multistepAjax'),
+            'wrapper' => 'field-display-overview-wrapper',
+            'effect' => 'fade',
+          ),
+          '#field_name' => $field_group->field_group_name,
+          '#type' => 'image_button',
+          '#name' => $field_group->field_group_name . '_settings_edit',
+          '#src' => 'core/misc/configure-dark.png',
+          '#attributes' => array(
+            'class' => array(
+              0 => 'field-plugin-settings-edit',
+            ),
+            'alt' => 'Edit',
+          ),
+          '#op' => 'edit',
+          '#limit_validation_errors' => array(
+            0 => array(
+              0 => 'fields',
+              1 => $field_group->field_group_name,
+              2 => 'type'
+            )
+          ),
+          '#prefix' => '<div class="field-plugin-settings-edit-wrapper">',
+          '#suffix' => '</div>'
+        ),
 
-    return $groups;
+      );
 
   }
 

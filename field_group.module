@@ -46,68 +46,24 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
   $view_mode = $form['#mode'];
 
 
-
-
-
   $field_group_field_ui = new FieldGroupFieldUi($entity_type, $bundle, $display_mode, $view_mode);
+  $field_groups = $field_group_field_ui->getFieldGroups();
+  dsm($field_groups);
 
-  // dsm($field_group_field_ui->createFieldGroup(array('id' => 'fielg_group_dolle_gruppe')));
-
-
-
-  // Get existing fieldgroups.
-  // $field_group = new FieldGroup($entity_type, $bundle, $display_mode, $view_mode);
-  $existing_field_groups = $field_group_field_ui->getMachineNames();
-  // dsm($existing_field_groups);
-
-  // $add_group = new FieldGroupAddGroup();
+  // Add add_fieldgroup form element.
   $form['fields']['_add_new_field_group'] = $field_group_field_ui->field_group_add_group();
 
 
   $machine_names = $field_group_field_ui->getMachineNames();
-  $draggable_fields = $field_group_field_ui->getDraggableFields($form);
 
-  // // dsm($form['fields']['field_image']['settings_edit']);
+  // Attach field_groups.
   $form['#field_groups'] = array();
-  foreach($field_group_field_ui->getFieldgroupInstance($machine_names) as $field_group_name => $group) {
-    $form['#field_groups'][$field_group_name] = $group;
-    // dsm($group);
-    $form['fields'][$field_group_name] = $group;
-    $form['fields'][$field_group_name]['settings_edit'] = array(
-      '#submit' => array(
-        array($form_state['build_info']['callback_object'], 'multistepSubmit'),
-        // array($field_group_field_ui, 'multistepSubmit'),
-      ),
-      '#ajax' => array(
-        'callback' => array($form_state['build_info']['callback_object'], 'multistepAjax'),
-        // 'callback' => array($field_group_field_ui, 'multistepAjax'),
-        'wrapper' => 'field-display-overview-wrapper',
-        'effect' => 'fade',
-      ),
-      '#field_name' => $field_group_name, // 'field_group-' + $group_name, //'field_test',
-      '#type' => 'image_button',
-      '#name' => $field_group_name . '_settings_edit',
-      '#src' => 'core/misc/configure-dark.png',
-      '#attributes' => array(
-        'class' => array(
-          0 => 'field-plugin-settings-edit',
-        ),
-        'alt' => 'Edit',
-      ),
-      '#op' => 'edit',
-      '#limit_validation_errors' => array(
-        0 => array(
-          0 => 'fields',
-          1 => $field_group_name,
-          2 => 'type'
-        )
-      ),
-      '#prefix' => '<div class="field-plugin-settings-edit-wrapper">',
-      '#suffix' => '</div>'
-    );
-    // dsm($form['fields'][$group_name]);
+  foreach ($field_groups as $field_group_id => $field_group) {
+    $field_group_instance = $field_group_field_ui->getFieldgroupInstance($form, $form_state, $field_group);
+    $form['#field_groups'][$field_group->field_group_name] = $field_group_instance;
+    $form['fields'][$field_group->field_group_name] = $field_group_instance;
   }
-  // dsm($form);
+
 
   // TODO: THis needs to be generic. Looks like a huge amount of work -.-"
   dsm($form_state);
@@ -184,6 +140,7 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
 
   // Add the parent parameters.
   // TODO: This may needs to be refactored.
+  $existing_field_groups = $field_group_field_ui->getMachineNames();
   foreach($existing_field_groups as $delta => $id) {
     $field_parent = Drupal::config('field_group.' . $id)->get('field_group_name');
     $fields = Drupal::config('field_group.' . $id)->get('fields');
@@ -213,6 +170,7 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
   // Add _add_new_field_group to options, to be able to nest fields on-the-flow.
   $options['_add_new_field_group'] = '_add_new_field_group';
   // Add options to the fields.
+  $draggable_fields = $field_group_field_ui->getDraggableFields($form);
   foreach($draggable_fields as $field_name) {
     if(isset($form['fields'][$field_name])) {
       $form['fields'][$field_name]['parent_wrapper']['parent']['#options'] = $options;
