@@ -48,13 +48,11 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
 
   $field_group_field_ui = new FieldGroupFieldUi($entity_type, $bundle, $display_mode, $view_mode);
   $field_groups = $field_group_field_ui->getFieldGroups();
-  dsm($field_groups);
 
   // Add add_fieldgroup form element.
   $form['fields']['_add_new_field_group'] = $field_group_field_ui->field_group_add_group();
 
 
-  $machine_names = $field_group_field_ui->getMachineNames();
 
   // Attach field_groups.
   $form['#field_groups'] = array();
@@ -139,18 +137,11 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
   // dsm($form['fields']['field_summary']);
 
   // Add the parent parameters.
-  // TODO: This may needs to be refactored.
-  $existing_field_groups = $field_group_field_ui->getMachineNames();
-  foreach($existing_field_groups as $delta => $id) {
-    $field_parent = Drupal::config('field_group.' . $id)->get('field_group_name');
-    $fields = Drupal::config('field_group.' . $id)->get('fields');
-    if(!empty($fields)) {
-      foreach ($fields as $delta => $field_name) {
-        if($field_name != $field_parent && isset($form['fields'][$field_name])) {
-          // // dsm($form['fields'][$field_name]);
-          // dsm($field_parent);
-          // dsm($field_name);
-          $form['fields'][$field_name]['parent_wrapper']['parent']['#value'] = $field_parent;
+  foreach ($field_groups as $field_group_id => $field_group) {
+    if(!empty($field_group->fields)) {
+      foreach ($field_group->fields as $delta => $field_name) {
+        if($field_name != $field_group->field_group_name && isset($form['fields'][$field_name])) {
+          $form['fields'][$field_name]['parent_wrapper']['parent']['#value'] = $field_group->field_group_name;
         }
       }
     }
@@ -163,9 +154,8 @@ function field_group_admin_form(&$form, &$form_state, $form_id) {
 
   // Prepare options to make them draggable to field_groups.
   $options = array();
-  $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
-  foreach($machine_names as $machine_name => $key) {
-    $options[$machine_name] = $machine_name;
+  foreach($field_groups as $field_group) {
+    $options[$field_group->field_group_name] = $field_group->field_group_name;
   }
   // Add _add_new_field_group to options, to be able to nest fields on-the-flow.
   $options['_add_new_field_group'] = '_add_new_field_group';

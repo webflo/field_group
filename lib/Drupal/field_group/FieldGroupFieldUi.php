@@ -131,21 +131,12 @@ class FieldGroupFieldUi {
     return $field_groups;
   }
 
-  public function getMachineNames() {
-    $machine_names = array();
-    $field_groups = $this->getFieldGroups();
-
-    // $storage_controller = \Drupal::entityManager()->getStorageController('field_group');
-    // $field_groups = isset($field_groups) ? $storage_controller->loadMultiple($field_groups) : array();
-    foreach($field_groups as $field_group) {
-      $machine_names[$field_group->field_group_name] = $field_group->id;
-    }
-    return $machine_names;
-  }
-
-
   public function getDraggableFields($form) {
-    $fieldGroupKeys = array_keys($this->getMachineNames());
+    $field_groups = $this->getFieldGroups();
+    $fieldGroupKeys = array();
+    foreach($field_groups as $field_group) {
+      $fieldGroupKeys[$field_group->field_group_name] = $field_group->field_group_name;
+    }
     return array_merge($form['#fields'], $form['#extra'], array(
         '_add_new_field',
         '_add_existing_field',
