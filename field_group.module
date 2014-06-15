@@ -1,0 +1,378 @@
+<?php
+
+/**
+ * @file
+ * Allows administrators to attach custom fields to fieldable types.
+ */
+
+/**
+ * Implements hook_field_group_formatter_info().
+ */
+function field_group_field_group_formatter_info() {
+
+  return array(
+    'form' => array(
+      'html-element' => array(
+        'label' => t('HTML element'),
+        'description' => t('This fieldgroup renders the inner content in a HTML element with classes and attributes.'),
+        'instance_settings' => array('element' => 'div', 'show_label' => 0, 'label_element' => 'div', 'classes' => '', 'attributes' => '', 'required_fields' => 1),
+      ),
+      'div' => array(
+        'label' => t('Div'),
+        'description' => t('This fieldgroup renders the inner content in a simple div with the title as legend.'),
+        'format_types' => array('open', 'collapsible', 'collapsed'),
+        'instance_settings' => array('description' => '', 'show_label' => 1, 'label_element' => 'h3', 'effect' => 'none', 'speed' => 'fast', 'classes' => '', 'required_fields' => 1, 'id' => ''),
+        'default_formatter' => 'open',
+      ),
+      'html5' => array(
+        'label' => t('HTML5'),
+        'description' => t('This fieldgroup renders the inner content in a semantic HTML5 wrapper'),
+        'instance_settings' => array('wrapper' => '', 'classes' => '', 'id' => ''),
+      ),
+      'fieldset' => array(
+        'label' => t('Fieldset'),
+        'description' => t('This fieldgroup renders the inner content in a fieldset with the title as legend.'),
+        'format_types' => array('open', 'collapsible', 'collapsed'),
+        'instance_settings' => array('description' => '', 'classes' => '', 'required_fields' => 1),
+        'default_formatter' => 'collapsible',
+      ),
+      'tabs' => array(
+        'label' => t('Vertical tabs group'),
+        'description' => t('This fieldgroup renders child groups in its own vertical tabs wrapper.'),
+        'instance_settings' => array('classes' => ''),
+      ),
+      'tab' => array(
+        'label' => t('Vertical tab'),
+        'description' => t('This fieldgroup renders the content in a fieldset, part of vertical tabs group.'),
+        'format_types' => array('open', 'closed'),
+        'instance_settings' => array('description' => '', 'classes' => '', 'required_fields' => 1),
+        'default_formatter' => 'closed',
+      ),
+      'htabs' => array(
+        'label' => t('Horizontal tabs group'),
+        'description' => t('This fieldgroup renders child groups in its own horizontal tabs wrapper.'),
+        'instance_settings' => array('classes' => ''),
+      ),
+      'htab' => array(
+        'label' => t('Horizontal tab'),
+        'format_types' => array('open', 'closed'),
+        'description' => t('This fieldgroup renders the content in a fieldset, part of horizontal tabs group.'),
+        'default_formatter' => 'closed',
+        'instance_settings' => array('description' => '', 'classes' => '', 'required_fields' => 1, 'id' => ''),
+      ),
+      'multipage-group' => array(
+        'label' => t('Multipage group'),
+        'description' => t('This fieldgroup renders groups on separate pages.'),
+        'instance_settings' => array('classes' => '', 'page_header' => 3, 'move_additional' => 1, 'page_counter' => 1, 'move_button' => 0),
+      ),
+      'multipage' => array(
+        'label' => t('Multipage'),
+        'format_types' => array('start', 'no-start'),
+        'description' => t('This fieldgroup renders the content in a page.'),
+        'default_formatter' => 'no-start',
+        'instance_settings' => array('description' => '', 'classes' => '', 'required_fields' => 1),
+      ),
+      'accordion' => array(
+        'label' => t('Accordion group'),
+        'description' => t('This fieldgroup renders child groups as jQuery accordion.'),
+        'instance_settings' => array('effect' => 'none', 'classes' => ''),
+      ),
+      'accordion-item' => array(
+        'label' => t('Accordion item'),
+        'format_types' => array('open', 'closed'),
+        'description' => t('This fieldgroup renders the content in a div, part of accordion group.'),
+        'default_formatter' => 'closed',
+        'instance_settings' => array('description' => '', 'classes' => '', 'required_fields' => 1),
+      ),
+    ),
+    'display' => array(
+      'html-element' => array(
+        'label' => t('HTML element'),
+        'description' => t('This fieldgroup renders the inner content in a HTML element with classes and attributes.'),
+        'instance_settings' => array('element' => 'div', 'show_label' => 0, 'label_element' => 'div', 'classes' => '', 'attributes' => '', 'required_fields' => 1),
+      ),
+      'div' => array(
+        'label' => t('Div'),
+        'description' => t('This fieldgroup renders the inner content in a simple div with the title as legend.'),
+        'format_types' => array('open', 'collapsible', 'collapsed'),
+        'instance_settings' => array('description' => '', 'show_label' => 1, 'label_element' => 'h3', 'effect' => 'none', 'speed' => 'fast', 'classes' => '', 'id' => ''),
+        'default_formatter' => 'collapsible',
+      ),
+      'html5' => array(
+        'label' => t('HTML5'),
+        'description' => t('This fieldgroup renders the inner content in a semantic HTML5 wrapper'),
+        'instance_settings' => array('wrapper' => '', 'classes' => '', 'id' => ''),
+      ),
+      'fieldset' => array(
+        'label' => t('Fieldset'),
+        'description' => t('This fieldgroup renders the inner content in a fieldset with the title as legend.'),
+        'format_types' => array('open', 'collapsible', 'collapsed'),
+        'instance_settings' => array('description' => '', 'classes' => ''),
+        'default_formatter' => 'collapsible',
+      ),
+      'tabs' => array(
+        'label' => t('Vertical tabs group'),
+        'description' => t('This fieldgroup renders child groups in its own vertical tabs wrapper.'),
+        'instance_settings' => array('classes' => ''),
+      ),
+      'tab' => array(
+        'label' => t('Vertical tab'),
+        'description' => t('This fieldgroup renders the content in a fieldset, part of vertical tabs group.'),
+        'format_types' => array('open', 'closed'),
+        'instance_settings' => array('description' => '', 'classes' => ''),
+        'default_formatter' => 'closed',
+      ),
+      'htabs' => array(
+        'label' => t('Horizontal tabs group'),
+        'description' => t('This fieldgroup renders child groups in its own horizontal tabs wrapper.'),
+        'instance_settings' => array('classes' => ''),
+      ),
+      'htab' => array(
+        'label' => t('Horizontal tab item'),
+        'format_types' => array('open', 'closed'),
+        'description' => t('This fieldgroup renders the content in a fieldset, part of horizontal tabs group.'),
+        'instance_settings' => array('description' => '', 'classes' => '', 'id' => ''),
+        'default_formatter' => 'closed',
+      ),
+      'accordion' => array(
+        'label' => t('Accordion group'),
+        'description' => t('This fieldgroup renders child groups as jQuery accordion.'),
+        'instance_settings' => array('description' => '', 'classes' => '', 'effect' => 'bounceslide'),
+      ),
+      'accordion-item' => array(
+        'label' => t('Accordion item'),
+        'format_types' => array('open', 'closed'),
+        'description' => t('This fieldgroup renders the content in a div, part of accordion group.'),
+        'instance_settings' => array('classes' => ''),
+        'default_formatter' => 'closed',
+      ),
+    ),
+  );
+}
+
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ * Using hook_form_field_ui_form_display_overview_form_alter.
+ */
+function field_group_form_field_ui_form_display_overview_form_alter(&$form, &$form_state) {
+  form_load_include($form_state, 'inc', 'field_group', 'includes/field_ui');
+  field_group_field_ui_display_form_alter($form, $form_state, 'form');
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ * Using hook_form_field_ui_display_overview_form_alter.
+ */
+function field_group_form_field_ui_display_overview_form_alter(&$form, &$form_state) {
+  form_load_include($form_state, 'inc', 'field_group', 'includes/field_ui');
+  field_group_field_ui_display_form_alter($form, $form_state, 'view');
+}
+
+/**
+ * Function to retrieve all format possibilities for the fieldgroups.
+ * @todo move to plugins.
+ */
+function field_group_formatter_info($display_overview = FALSE) {
+
+  $formatters = array();
+  $formatters += module_invoke_all('field_group_formatter_info');
+
+  $hidden_region = array(
+    'label' => '<' . t('Hidden') . '>',
+    'description' => '',
+    'format_types' => array(),
+    'instance_settings' => array(),
+    'default_formatter' => '',
+  );
+
+  return $formatters;
+}
+
+/**
+ * Saves a group definition.
+ * This function is called by ctools export when calls are made
+ * through ctools_export_crud_save().
+ *
+ * @param $group
+ *   A group definition.
+ */
+function field_group_group_save(& $group) {
+
+  $config_name = 'field_group.' . $group->entity_type . '.' . $group->bundle . '.' . $group->context . '.' . $group->mode . '.' . $group->group_name;
+  $config = \Drupal::config($config_name);
+
+  // Group is new.
+  if ($config->isNew()) {
+    module_invoke_all('field_group_create_field_group', $group);
+  }
+  // Existing group.
+  else {
+    module_invoke_all('field_group_update_field_group', $group);
+  }
+
+  return $config->setData((array)$group)->save();
+
+}
+
+/**
+ * Get all groups.
+ *
+ * @param $entity_type
+ *   The name of the entity.
+ * @param $bundle
+ *   The name of the bundle.
+ * @param $context
+ *   The context of the view mode (form or view)
+ * @param $mode
+ *   The view mode.
+ * @param $reset.
+ *   Whether to reset the cache or not.
+ */
+function field_group_info_groups($entity_type = NULL, $bundle = NULL, $context = NULL, $mode = NULL, $reset = FALSE) {
+
+  static $groups = NULL;
+
+  if (!isset($groups) || $reset) {
+    if (!$reset && $cache = \Drupal::cache()->get('field_groups')) {
+      $groups = $cached->data;
+    }
+    else {
+      $field_group_configs = \Drupal::configFactory()->listAll('field_group.');
+      foreach ($field_group_configs as $config_name) {
+        $group = (object)\Drupal::config($config_name)->get();
+        $groups[$group->entity_type][$group->bundle][$group->context][$group->mode][$group->group_name] = $group;
+      }
+      \Drupal::cache()->set('field_groups', $groups);
+    }
+  }
+
+  \Drupal::moduleHandler()->alter('field_group_info', $groups);
+
+  if (!isset($entity_type)) {
+    return $groups;
+  }
+  elseif (!isset($bundle) && isset($groups[$entity_type])) {
+    return $groups[$entity_type];
+  }
+  elseif (!isset($context) && isset($groups[$entity_type][$bundle])) {
+    return $groups[$entity_type][$bundle];
+  }
+  elseif (!isset($mode) && isset($groups[$entity_type][$bundle][$context])) {
+    return $groups[$entity_type][$bundle][$context];
+  }
+  elseif (isset($groups[$entity_type][$bundle][$context][$mode])) {
+    return $groups[$entity_type][$bundle][$context][$mode];
+  }
+  return array();
+
+}
+
+/**
+ * Loads a group definition.
+ *
+ * @param $group_name
+ *   The name of the group.
+ * @param $entity_type
+ *   The name of the entity.
+ * @param $bundle_name
+ *   The name of the bundle.
+ * @param $context
+ *   The context of the view mode (form or view)
+ * @param $mode
+ *   The view mode to load.
+ */
+function field_group_load_field_group($group_name, $entity_type, $bundle, $context, $mode) {
+  return (object)\Drupal::config('field_group.' . $entity_type . '.' . $bundle . '.' . $context . '.' . $mode . '.' . $group_name)->get();
+}
+
+/**
+ * Checks if a field_group exists in required context.
+ *
+ * @param String $group_name
+ *   The name of the group.
+ * @param String $entity_type
+ *   The name of the entity.
+ * @param String $bundle
+ *   The bundle for the entity.
+ * @param $context
+ *   The context of the view mode (form or view)
+ * @param String $mode
+ *   The view mode context the group will be rendered.
+ */
+function field_group_exists($group_name, $entity_type, $bundle, $context, $mode) {
+  $config = \Drupal::config('field_group.' . $entity_type . '.' . $bundle . '.' . $context . '.' . $mode . $group_name);
+  return !$config->isNew();
+}
+
+/**
+ * Calculates html classes for a group.
+ */
+function _field_group_get_html_classes(&$group) {
+
+  if (isset($group->format_settings['formatter'])) {
+    $group->collapsible = in_array($group->format_settings['formatter'], array('collapsible', 'collapsed'));
+    // Open or closed horizontal or vertical tabs will be collapsible by default.
+    if ($group->format_type == 'tab' || $group->format_type == 'htab') {
+      $group->collapsible = TRUE;
+    }
+    $group->collapsed = in_array($group->format_settings['formatter'], array('collapsed', 'closed'));
+  }
+
+  $classes = new stdClass();
+
+  // Prepare extra classes, required and optional ones.
+  $optional = array(str_replace('_', '-', $group->group_name));
+  $required = array();
+  if ($group->format_type == 'multipage') {
+    $required[] = 'field-group-' . $group->format_type;
+  }
+  else {
+    $optional[] = 'field-group-' . $group->format_type;
+  }
+
+  if (isset($group->format_settings['formatter']) && $group->collapsible) {
+    $required[] = 'collapsible';
+    if ($group->collapsed) {
+      $required[] = 'collapsed';
+    }
+  }
+
+  if (isset($group->format_settings['instance_settings'])) {
+
+    // Add a required-fields class to trigger the js.
+    if (!empty($group->format_settings['instance_settings']['required_fields'])) {
+      $required[] = 'required-fields';
+    }
+
+    // Add user selected classes.
+    if (!empty($group->format_settings['instance_settings']['classes'])) {
+      $required[] = check_plain($group->format_settings['instance_settings']['classes']);
+    }
+
+    // Extra required classes for div.
+    if ($group->format_type == 'div') {
+      if ($group->format_settings['formatter'] != 'open') {
+
+        $speed = isset($group->format_settings['instance_settings']['speed']) ? $group->format_settings['instance_settings']['speed'] : 'none';
+        $required[] = 'speed-' . $speed;
+
+        $effect = isset($group->format_settings['instance_settings']['effect']) ? $group->format_settings['instance_settings']['effect'] : 'none';
+        $required[] = 'effect-' . $effect;
+      }
+    }
+
+    // Extra required classes for accordions.
+    elseif ($group->format_type == 'accordion') {
+      $required[] = 'field-group-' . $group->format_type . '-wrapper';
+      $effect = isset($group->format_settings['instance_settings']['effect']) ? $group->format_settings['instance_settings']['effect'] : 'none';
+      $required[] = 'effect-' . $effect;
+    }
+
+  }
+
+  $classes->required = $required;
+  $classes->optional = $optional;
+
+  return $classes;
+}
