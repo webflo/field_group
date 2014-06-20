@@ -708,7 +708,7 @@ function field_group_formatter_settings_update(& $group, $settings) {
 function field_group_format_settings_summary($group_name, $group) {
   $summary = implode('<br />', module_invoke_all('field_group_format_summary', $group));
   return array(
-    '#markup' => '<div class="field-formatter-summary">' . $summary . '</div>',
-    '#cell_attributes' => array('class' => array('field-formatter-summary-cell')),
+    '#markup' => '<div class="field-plugin-summary">' . $summary . '</div>',
+    '#cell_attributes' => array('class' => array('field-plugin-summary-cell')),
   );
 }

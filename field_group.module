@@ -387,6 +387,51 @@ function field_group_formatter_info($display_overview = FALSE) {
 }
 
 /**
+ * Implements hook_field_group_format_summary().
+ */
+function field_group_field_group_format_summary($group) {
+
+  $group_form = module_invoke_all('field_group_format_settings', $group);
+
+  $output = '';
+  if (isset($group->format_settings['formatter'])) {
+    $output .= $group->format_type . ': ' . $group->format_settings['formatter'];
+  }
+  if (isset($group->format_settings['instance_settings'])) {
+    $last = end($group->format_settings['instance_settings']);
+    $output .= '<br />';
+    foreach ($group->format_settings['instance_settings'] as $key => $value) {
+      if (empty($value)) {
+        continue;
+      }
+
+      $output .= $key . ': ';
+
+      if (isset($group_form['instance_settings'], $group_form['instance_settings'][$key]['#options'])) {
+        if (is_array($value)) {
+          $value = implode(array_filter($value), ', ');
+        }
+        else {
+          $value = $group_form['instance_settings'][$key]['#options'][$value];
+        }
+      }
+
+      // Shorten the string.
+      if (drupal_strlen($value) > 38) {
+        $value = truncate_utf8($value, 50, TRUE, TRUE);
+      }
+      // If still numeric, handle it as yes or no.
+      elseif (is_numeric($value)) {
+        $value = $value == '1' ? t('yes') : t('no');
+      }
+      $output .= check_plain($value);
+      $output .= $last == $value ? ' ' : '<br />';
+    }
+  }
+  return $output;
+}
+
+/**
  * Saves a group definition.
  * This function is called by ctools export when calls are made
  * through ctools_export_crud_save().
