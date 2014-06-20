@@ -87,7 +87,7 @@ function field_group_field_group_formatter_info() {
         'instance_settings' => array('description' => '', 'classes' => '', 'required_fields' => 1),
       ),
     ),
-    'display' => array(
+    'view' => array(
       'html-element' => array(
         'label' => t('HTML element'),
         'description' => t('This fieldgroup renders the inner content in a HTML element with classes and attributes.'),
@@ -187,8 +187,7 @@ function field_group_field_group_format_settings($group) {
   );
 
   $field_group_types = field_group_formatter_info();
-  $mode = $group->mode == 'form' ? 'form' : 'display';
-  $formatter = $field_group_types[$mode][$group->format_type];
+  $formatter = $field_group_types[$group->context][$group->format_type];
 
   // Add the required formatter type selector.
   if (isset($formatter['format_types'])) {
@@ -201,7 +200,7 @@ function field_group_field_group_format_settings($group) {
     );
   }
 
-  if (isset($formatter['instance_settings']['required_fields']) && $mode == 'form') {
+  if (isset($formatter['instance_settings']['required_fields']) && $group->context == 'form') {
     $form['instance_settings']['required_fields'] = array(
       '#type' => 'checkbox',
       '#title' => t('Mark group as required if it contains required fields.'),
@@ -477,7 +476,7 @@ function field_group_info_groups($entity_type = NULL, $bundle = NULL, $context =
 
   if (!isset($groups) || $reset) {
     if (!$reset && $cache = \Drupal::cache()->get('field_groups')) {
-      $groups = $cached->data;
+      $groups = $cache->data;
     }
     else {
       $field_group_configs = \Drupal::configFactory()->listAll('field_group.');

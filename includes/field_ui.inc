@@ -157,6 +157,15 @@ function field_group_field_ui_display_form_alter(&$form, &$form_state, $context)
       ),
     );
 
+    // For view settings. Add a spacer cell. We can't use colspan because of the javascript .
+    if ($params->context == 'view') {
+      $table[$name] += array(
+        'spacer' => array(
+          '#markup' => '&nbsp;'
+        )
+      );
+    }
+
     $table[$name] += array(
       'format' => array(
         'type' => array(
@@ -428,7 +437,7 @@ function field_group_field_ui_create_vertical_tabs(&$form, &$form_state, $params
     '#title' => t('Select source display'),
     '#description' => t('Clone fieldgroups from selected display to the current display'),
     '#type' => 'select',
-    '#options' => $view_modes,
+    '#options' => $displays,
     '#default_value' => 'none'
   );
   $form['field_group']['fieldgroup_submit'] = array(
@@ -640,7 +649,7 @@ function field_group_format_settings_label_validate($element, &$form_state) {
   $group = $form_state['values']['fields'][$element['#parents'][1]];
   $settings = $group['settings_edit_form']['settings'];
   if ($group['format']['type'] == 'fieldset' && ($settings['formatter'] == 'collapsed' || $settings['formatter'] == 'collapsible') && empty($settings['label'])) {
-    form_error($element, t('The label is required when formatter is collapsible or collapsed'));
+    \Drupal::formBuilder()->setError($element, $form_state, t('The label is required when formatter is collapsible or collapsed'));
   }
 
 }
@@ -652,7 +661,7 @@ function field_group_format_settings_label_validate($element, &$form_state) {
  */
 function field_group_validate_css_class($element, &$form_state) {
   if (!empty($form_state['values']['fields'][$form_state['plugin_settings_edit']]['settings_edit_form']['settings']['instance_settings']['classes']) && !preg_match('!^[A-Za-z0-9-_ ]+$!', $form_state['values']['fields'][$form_state['plugin_settings_edit']]['settings_edit_form']['settings']['instance_settings']['classes'])) {
-    form_error($element, t('The css class must include only letters, numbers, underscores and dashes.'));
+    \Drupal::formBuilder()->setError($element, $form_state, t('The css class must include only letters, numbers, underscores and dashes.'));
   }
 }
 
@@ -663,7 +672,7 @@ function field_group_validate_css_class($element, &$form_state) {
  */
 function field_group_validate_id($element, &$form_state) {
   if (!empty($form_state['values']['fields'][$form_state['plugin_settings_edit']]['settings_edit_form']['settings']['instance_settings']['id']) && !preg_match('!^[A-Za-z0-9-_]+$!', $form_state['values']['fields'][$form_state['plugin_settings_edit']]['settings_edit_form']['settings']['instance_settings']['id'])) {
-    form_error($element, t('The id must include only letters, numbers, underscores and dashes.'));
+    \Drupal::formBuilder()->setError($element, $form_state, t('The id must include only letters, numbers, underscores and dashes.'));
   }
 }
 
@@ -711,4 +720,64 @@ function field_group_format_settings_summary($group_name, $group) {
     '#markup' => '<div class="field-plugin-summary">' . $summary . '</div>',
     '#cell_attributes' => array('class' => array('field-plugin-summary-cell')),
   );
+}
+
+/**
+ * Validate handler to validate saving existing fieldgroups from one view mode or form to another.
+ */
+function field_group_field_ui_clone_field_groups_validate($form, &$form_state) {
+
+  list($context, $mode) = explode('.', $form_state['values']['fieldgroup_clone']);
+  $form_state['#source_groups'] = $form_state['#groups_to_clone'] = field_group_info_groups($form_state['field_group_params']->entity_type, $form_state['field_group_params']->bundle, $context, $mode);
+
+  // Check for types are not known in current mode.
+  if ($form_state['field_group_params']->context != 'form') {
+    $non_existing_types = array('multipage', 'multipage-group');
+  }
+  else {
+    $non_existing_types = array('div');
+  }
+
+  foreach ($form_state['#source_groups'] as $key => $group) {
+    if (in_array($group->format_type, $non_existing_types)) {
+      unset($form_state['#source_groups'][$key]);
+      drupal_set_message(t('Skipping @group because this type does not exist in current mode', array('@group' => $group->label)), 'warning');
+    }
+  }
+
+  if (empty($form_state['#source_groups'])) {
+    // Report error found with selection.
+    \Drupal::formBuilder()->setErrorByName('additional_settings][fieldgroup_clone', $form_state, t('No field groups were found in selected view mode.'));
+    return;
+  }
+
+}
+
+/**
+ * Submit handler to save existing fieldgroups from one view mode or form to another.
+ */
+function field_group_field_ui_clone_field_groups($form, &$form_state) {
+
+  $source_mode = $form_state['#source_mode'];
+  $groups_to_clone = $form_state['#groups_to_clone'];
+
+  $fields = array_keys($form_state['values']['fields']);
+  if (!empty($form_state['#source_groups'])) {
+
+    foreach ($form_state['#source_groups'] as $source_group) {
+      if (in_array($source_group->group_name, $fields)) {
+        drupal_set_message(t('Fieldgroup @group is not cloned since a group already exists with the same name.', array('@group' => $source_group->group_name)), 'warning');
+        continue;
+      }
+
+      $source_group->context = $form_state['field_group_params']->context;
+      $source_group->mode = $form_state['field_group_params']->mode;
+      $source_group->children = array();
+      field_group_group_save($source_group);
+
+      drupal_set_message(t('Fieldgroup @group cloned successfully.', array('@group' => $source_group->group_name)));
+
+    }
+  }
+
 }
