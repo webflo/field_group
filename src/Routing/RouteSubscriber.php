@@ -39,7 +39,7 @@ class RouteSubscriber extends RouteSubscriberBase {
    * {@inheritdoc}
    */
   protected function alterRoutes(RouteCollection $collection) {
-return;
+
     // Create a delete fieldgroup route for every entity.
     foreach ($this->manager->getDefinitions() as $entity_type_id => $entity_type) {
       $defaults = array();
@@ -50,12 +50,24 @@ return;
         }
         $path = $entity_route->getPath();
 
+        $options = array();
+        if (($bundle_entity_type = $entity_type->getBundleEntityType()) && $bundle_entity_type !== 'bundle') {
+          $options['parameters'][$entity_type->getBundleEntityType()] = array(
+            'type' => 'entity:' . $entity_type->getBundleEntityType(),
+          );
+          $options['parameters']['field_group'] = array(
+            'type' => 'field_group',
+            'entity_type' => $entity_type->getBundleEntityType(),
+          );
+        }
+
         $route = new Route(
           "$path/groups/{field_group}/delete",
-          array('_entity_form' => 'field_instance_config.delete'),
-          array('_entity_access' => 'field_instance_config.delete')
+          array('_form' => '\Drupal\field_group\Form\FieldGroupDeleteForm'),
+          array('_permission' => 'administer site configuration'),
+          $options
         );
-        $collection->add("field_ui.delete_$entity_type_id", $route);
+        $collection->add("field_group.delete_$entity_type_id", $route);
 
       }
     }

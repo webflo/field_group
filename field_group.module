@@ -431,6 +431,20 @@ function field_group_field_group_format_summary($group) {
 }
 
 /**
+ * Implements hook_field_info_max_weight().
+ */
+function field_group_field_info_max_weight($entity_type, $bundle, $context, $context_mode) {
+
+  $groups = field_group_info_groups($entity_type, $bundle, $context, $context_mode);
+
+  $weights = array();
+  foreach ($groups as $group) {
+    $weights[] = $group->weight;
+  }
+  return $weights ? max($weights) : NULL;
+}
+
+/**
  * Saves a group definition.
  * This function is called by ctools export when calls are made
  * through ctools_export_crud_save().
@@ -440,8 +454,7 @@ function field_group_field_group_format_summary($group) {
  */
 function field_group_group_save(& $group) {
 
-  $config_name = 'field_group.' . $group->entity_type . '.' . $group->bundle . '.' . $group->context . '.' . $group->mode . '.' . $group->group_name;
-  $config = \Drupal::config($config_name);
+  $config = \Drupal::config(_field_group_get_config_name($group));
 
   // Group is new.
   if ($config->isNew()) {

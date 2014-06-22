@@ -98,6 +98,8 @@ function field_group_field_ui_display_form_alter(&$form, &$form_state, $context)
       $group = & $params->groups[$name];
     }
 
+    $config_name_suffix = $group->entity_type . '.' . $group->bundle . '.' . $group->context . '.' . $group->mode . '.' . $group->group_name;
+
     // Check the currently selected formatter, and merge persisted values for
     // formatter settings for the group.
     // This needs to be done first, so all fields are updated before creating form elements.
@@ -242,7 +244,7 @@ function field_group_field_ui_display_form_alter(&$form, &$form_state, $context)
         '#prefix' => '<div class="field-plugin-settings-edit-wrapper">',
         '#suffix' => '</div>',
       );
-      $table[$name]['settings_edit']['#suffix'] .= l(t('delete'), $params->admin_path . '/groups/' . $name . '/delete/' . $params->mode);
+      $table[$name]['settings_edit']['#suffix'] .= l(t('delete'), $params->admin_path . '/groups/' . $config_name_suffix . '/delete');
     }
 
   }
@@ -552,7 +554,6 @@ function field_group_field_overview_submit($form, &$form_state) {
     $formatter = $field_group_types[($mode == 'form' ? 'form' : 'display')][$values['format']['type']];
 
     $new_group = (object) array(
-      'identifier' => $values['group_name'] . '|' . $entity_type . '|' . $bundle . '|' . $mode,
       'group_name' => $values['group_name'],
       'entity_type' => $entity_type,
       'bundle' => $bundle,
@@ -757,9 +758,6 @@ function field_group_field_ui_clone_field_groups_validate($form, &$form_state) {
  * Submit handler to save existing fieldgroups from one view mode or form to another.
  */
 function field_group_field_ui_clone_field_groups($form, &$form_state) {
-
-  $source_mode = $form_state['#source_mode'];
-  $groups_to_clone = $form_state['#groups_to_clone'];
 
   $fields = array_keys($form_state['values']['fields']);
   if (!empty($form_state['#source_groups'])) {

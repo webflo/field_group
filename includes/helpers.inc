@@ -91,3 +91,10 @@ function _field_group_get_default_formatter_settings($format_type, $mode) {
     'instance_settings' => $formatter['instance_settings']
   );
 }
+
+/**
+ * Get the config filename for a given group.
+ */
+function _field_group_get_config_name($group) {
+  return 'field_group.' . $group->entity_type . '.' . $group->bundle . '.' . $group->context . '.' . $group->mode . '.' . $group->group_name;
+}
