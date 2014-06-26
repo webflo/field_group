@@ -65,9 +65,7 @@ function field_group_field_group_formatter_info() {
       'fieldset' => array(
         'label' => t('Fieldset'),
         'description' => t('This fieldgroup renders the inner content in a fieldset with the title as legend.'),
-        'format_types' => array('open', 'collapsible', 'collapsed'),
         'instance_settings' => array('description' => '', 'classes' => '', 'required_fields' => 1),
-        'default_formatter' => 'collapsible',
       ),
       'tabs' => array(
         'label' => t('Vertical tabs group'),
@@ -139,9 +137,7 @@ function field_group_field_group_formatter_info() {
       'fieldset' => array(
         'label' => t('Fieldset'),
         'description' => t('This fieldgroup renders the inner content in a fieldset with the title as legend.'),
-        'format_types' => array('open', 'collapsible', 'collapsed'),
         'instance_settings' => array('description' => '', 'classes' => ''),
-        'default_formatter' => 'collapsible',
       ),
       'tabs' => array(
         'label' => t('Vertical tabs group'),
@@ -342,7 +338,7 @@ function field_group_field_group_format_settings($group) {
       );
       break;
     case 'fieldset':
-      $form['label']['#description'] = t('Please enter a label for collapsible elements');
+      $form['label']['#description'] = t('Please enter a label');
       break;
     case 'multipage-group':
       $form['instance_settings']['page_header'] = array(
@@ -1090,16 +1086,11 @@ function field_group_pre_render_fieldset(&$element, $group, &$form) {
     '#type' => 'fieldset',
     '#id' => drupal_html_id($group->group_name),
     '#title' => check_plain(t($group->label)),
-    '#collapsible' => $group->collapsible,
-    '#collapsed' => $group->collapsed,
     '#pre_render' => array(),
     '#attributes' => array('class' => explode(' ', $group->classes)),
     '#description' => $group->description,
   );
 
-  // @TODO fieldsets are not collapsible anymore.
-  if ($group->collapsible || $group->collapsed) {
-  }
 }
 
 /**
