@@ -8,7 +8,7 @@ Drupal.behaviors.fieldUIFieldsOverview = {
     });
   }
 };
-  
+
 /**
  * Row handlers for the 'Manage fields' screen.
  */
@@ -31,7 +31,7 @@ Drupal.fieldUIFieldOverview.group.prototype = {
   getRegion: function () {
     return 'main';
   },
-  
+
   regionChange: function (region, recurse) {
     return {};
   },
@@ -52,10 +52,10 @@ Drupal.fieldUIFieldOverview.group.prototype = {
       var childRowHandler = $(childRow).data('fieldUIRowHandler');
       $.extend(refreshRows, childRowHandler.regionChange(region, false));
     });
-  }  
+  }
 };
-  
-  
+
+
 /**
  * Row handlers for the 'Manage display' screen.
  */
@@ -76,7 +76,7 @@ Drupal.fieldUIDisplayOverview.group = function(row, data) {
 
 Drupal.fieldUIDisplayOverview.group.prototype = {
   getRegion: function () {
-    return (this.$formatSelect.val() == 'hidden') ? 'hidden' : 'visible';
+    return (this.$formatSelect.val() == 'hidden') ? 'hidden' : 'content';
   },
 
   regionChange: function (region, recurse) {
@@ -129,9 +129,9 @@ Drupal.fieldUIDisplayOverview.group.prototype = {
       var childRowHandler = $(childRow).data('fieldUIRowHandler');
       $.extend(refreshRows, childRowHandler.regionChange(region, false));
     });
-    
+
   }
-  
+
 };
 
 })(jQuery);

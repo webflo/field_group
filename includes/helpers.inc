@@ -80,11 +80,10 @@ function _field_group_get_html_classes(&$group) {
 /**
  * Get the default formatter settings for a given formatter and a mode.
  */
-function _field_group_get_default_formatter_settings($format_type, $mode) {
+function _field_group_get_default_formatter_settings($format_type, $context) {
 
   $field_group_types = field_group_formatter_info();
-  $display_mode = $mode == 'form' ? 'form' : 'display';
-  $formatter = $field_group_types[$display_mode][$format_type];
+  $formatter = $field_group_types[$context][$format_type];
 
   return array(
     'formatter' => isset($formatter['default_formatter']) ? $formatter['default_formatter'] : '',

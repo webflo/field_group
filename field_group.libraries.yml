@@ -1,0 +1,16 @@
+core:
+    version: VERSION
+    js:
+      js/field_group.js: {}
+    css:
+      theme:
+        css/field_group-rtl.css: {}
+        css/field_group.css: {}
+
+accordion:
+  version: VERSION
+  js:
+    formatters/accordion/accordion.js: {}
+  dependencies:
+    - field_group/core
+    - core/jquery.ui.accordion

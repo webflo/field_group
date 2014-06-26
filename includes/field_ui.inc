@@ -551,7 +551,7 @@ function field_group_field_overview_submit($form, &$form_state) {
     $values = $form_values['_add_new_group'];
 
     $field_group_types = field_group_formatter_info();
-    $formatter = $field_group_types[($mode == 'form' ? 'form' : 'display')][$values['format']['type']];
+    $formatter = $field_group_types[($mode == 'form' ? 'form' : 'view')][$values['format']['type']];
 
     $new_group = (object) array(
       'group_name' => $values['group_name'],
@@ -564,7 +564,6 @@ function field_group_field_overview_submit($form, &$form_state) {
       'weight' => $values['weight'],
       'label' => $values['label'],
       'format_type' => $values['format']['type'],
-      'disabled' => FALSE,
     );
     $new_group->format_settings = array('formatter' => isset($formatter['default_formatter']) ? $formatter['default_formatter'] : '');
     if (isset($formatter['instance_settings'])) {
@@ -588,6 +587,7 @@ function field_group_field_overview_submit($form, &$form_state) {
         $children[$parent][$new_group->group_name] = $new_group->group_name;
       }
     }
+
   }
 
   // Update existing groups.
@@ -607,8 +607,7 @@ function field_group_field_overview_submit($form, &$form_state) {
 
     // If the format type is changed, make sure we have all required format settings.
     if ($group->format_type != $old_format_type) {
-      $mode = $group->mode == 'form' ? 'form' : 'display';
-      $default_formatter_settings = _field_group_get_default_formatter_settings($group->format_type, $mode);
+      $default_formatter_settings = _field_group_get_default_formatter_settings($group->format_type, $context);
       $group->format_settings += $default_formatter_settings;
       $group->format_settings['instance_settings'] += $default_formatter_settings['instance_settings'];
     }

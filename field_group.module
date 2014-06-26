@@ -5,7 +5,38 @@
  * Allows administrators to attach custom fields to fieldable types.
  */
 
+use Drupal\Component\Utility\Xss;
+use Drupal\Core\Render\Element;
+
+
 module_load_include('inc', 'field_group', 'includes/helpers');
+
+/**
+ * Implements hook_theme_registry_alter().
+ */
+function field_group_theme_registry_alter(&$theme_registry) {
+
+  // Inject field_group_build_entity_groups in all entity theming functions.
+  $entity_info = Drupal::entityManager()->getDefinitions();
+  $entity_types = array();
+  foreach ($entity_info as $entity_type_id => $entity_type) {
+    if ($entity_type->isFieldable()) {
+      $entity_types[] = $entity_type_id;
+    }
+  }
+
+  foreach ($entity_types as $entity_type) {
+    if (isset($theme_registry[$entity_type])) {
+      $theme_registry[$entity_type]['preprocess functions'][] = 'field_group_build_entity_groups';
+      // DS support, make sure it comes after field_group.
+      if ($key = array_search('ds_preprocess_ds_layout', $theme_registry[$entity_type]['preprocess functions'])) {
+        unset($theme_registry[$entity_type]['preprocess functions'][$key]);
+        $theme_registry[$entity_type]['preprocess functions'][] = 'ds_preprocess_ds_layout';
+      }
+    }
+  }
+
+}
 
 /**
  * Implements hook_field_group_formatter_info().
@@ -445,6 +476,309 @@ function field_group_field_info_max_weight($entity_type, $bundle, $context, $con
 }
 
 /**
+ * Implements hook_entity_display_build_alter().
+ */
+function field_group_entity_display_build_alter(&$element, $context) {
+  field_group_attach_groups($element, $context, 'view');
+}
+
+/**
+ * Implements hook_field_group_pre_render().
+ *
+ * @param Array $elements by address.
+ * @param Object $group The Field group info.
+ */
+function field_group_field_group_pre_render(&$element, &$group, & $form) {
+
+  field_group_pre_render_prepare($group);
+
+  $view_mode = isset($form['#view_mode']) ? $form['#view_mode'] : 'form';
+
+  // Add all field_group format types to the js settings.
+  $form['#attached']['js'][] = array(
+    'data' => array('field_group' => array($group->format_type => $view_mode)),
+    'type' => 'setting',
+  );
+
+  if (isset($group->format_settings['instance_settings']['id']) && !empty($group->format_settings['instance_settings']['id'])) {
+    $element['#id'] = drupal_html_id($group->format_settings['instance_settings']['id']);
+  }
+
+  $element['#weight'] = $group->weight;
+
+  // Call the pre render function for the format type.
+  $function = "field_group_pre_render_" . str_replace("-", "_", $group->format_type);
+  if (function_exists($function)) {
+    $function($element, $group, $form);
+  }
+
+}
+
+/**
+ * Implements hook_field_group_build_pre_render_alter().
+ * @param Array $elements by address.
+ */
+function field_group_field_group_build_pre_render_alter(& $element) {
+
+  // Someone is doing a node view, in a node view. Reset content.
+  if (isset($element['#node']->content) && count($element['#node']->content) > 0) {
+    $element['#node']->content = array();
+  }
+
+  $display = isset($element['#view_mode']);
+  $groups = array_keys($element['#fieldgroups']);
+
+  // Dish the fieldgroups with no fields for non-forms.
+  if ($display) {
+    field_group_remove_empty_display_groups($element, $groups);
+  }
+  else {
+    // Fix the problem on forms with additional settings.
+    field_group_remove_empty_form_groups('form', $element, $groups, $element['#groups'], $element['#entity_type']);
+  }
+
+  // Add the default field_group javascript and stylesheet.
+  $element['#attached']['js'][] = drupal_get_path('module', 'field_group') . '/field_group.js';
+  $element['#attached']['css'][] = drupal_get_path('module', 'field_group') . '/field_group.css';
+
+  // Move additional settings to the last multipage pane if configured that way.
+  // Note that multipages MUST be in the root of the form.
+  foreach (element_children($element) as $name) {
+    if (isset($element[$name]['#type']) && $element[$name]['#type'] == 'multipage' && isset($element['additional_settings'])) {
+      $parent_group = $element['#groups'][$name];
+      $move_additional = isset($parent_group->format_settings['instance_settings']['move_additional']) ? $parent_group->format_settings['instance_settings']['move_additional'] : 1;
+      $last_pane = NULL;
+      foreach (element_children($element[$name], TRUE) as $pane) {
+        $last_pane = $pane;
+      }
+      $element[$name][$last_pane]['additional_settings'] = $element['additional_settings'];
+      unset($element['additional_settings']);
+    }
+  }
+
+}
+
+/**
+ * Attach groups to the (form) build.
+ *
+ * @param Array $element
+ *   The part of the form.
+ *  @param Array $display_object_context
+ *   The display object context.
+ * @param $string $context
+ *   The display context (form or view).
+ * @param Array $form_state
+ *   The optional form state when in form context.
+ */
+function field_group_attach_groups(&$element, $display_object_context, $context, $form_state = array()) {
+
+  $entity_type = $display_object_context['display']->targetEntityType;
+  $bundle = $display_object_context['display']->bundle;
+  $mode = $display_object_context['display']->mode;
+
+  $element['#groups'] = field_group_info_groups($entity_type, $bundle, $context, $mode);
+  $element['#fieldgroups'] = $element['#groups'];
+
+  // Create a lookup array.
+  $group_children = array();
+  foreach ($element['#fieldgroups'] as $group_name => $group) {
+    foreach ($group->children as $child) {
+      $group_children[$child] = $group_name;
+    }
+  }
+  $element['#group_children'] = $group_children;
+
+}
+
+/**
+ * Preprocess/ Pre-render callback.
+ *
+ * @see field_group_form_pre_render()
+ * @see field_group_theme_registry_alter
+ * @see field_group_fields_nest()
+ * @param $vars preprocess vars or form element
+ * @param $context The display context (form or view)
+ * @return $element Array with re-arranged fields in groups.
+ */
+function field_group_build_entity_groups(&$vars, $context = 'view') {
+
+  if ($context == 'form') {
+    $element = &$vars;
+    $nest_vars = NULL;
+  }
+  else {
+    $element = &$vars['elements'];
+    $nest_vars = &$vars;
+  }
+
+  // No groups on the entity.
+  if (empty($element['#fieldgroups'])) {
+    return $element;
+  }
+
+  // Nest the fields in the corresponding field groups.
+  field_group_fields_nest($element, $nest_vars);
+
+  // Allow others to alter the pre_rendered build.
+  drupal_alter('field_group_build_pre_render', $element);
+
+  // Return the element on forms.
+  if ($context == 'form') {
+    return $element;
+  }
+
+  // No groups on the entity. Prerender removed empty field groups.
+  if (empty($element['#fieldgroups'])) {
+    return $element;
+  }
+
+  // Put groups inside content if we are rendering an entity_view.
+  foreach ($element['#fieldgroups'] as $group) {
+    if (!empty($element[$group->group_name]) && $context != 'user_profile') {
+      $vars['content'][$group->group_name] = $element[$group->group_name];
+    }
+    elseif (!empty($element[$group->group_name])) {
+      $vars['user_profile'][$group->group_name] = $element[$group->group_name];
+    }
+  }
+
+  // New css / js can be attached.
+  drupal_process_attached($element);
+}
+
+/**
+ * Recursive function to nest fields in the field groups.
+ *
+ * This function will take out all the elements in the form and
+ * place them in the correct container element, a fieldgroup.
+ * The current group element in the loop is passed recursively so we can
+ * stash fields and groups in it while we go deeper in the array.
+ * @param Array $element
+ *   The current element to analyse for grouping.
+ * @param Array $vars
+ *   Rendering vars from the entity being viewed.
+ */
+function field_group_fields_nest(&$element, &$vars = NULL) {
+
+  // Create all groups and keep a flat list of references to these groups.
+  $group_references = array();
+  foreach ($element['#fieldgroups'] as $group_name => $group) {
+    // Construct own weight, as some fields (for example preprocess fields) don't have weight set.
+    $element[$group_name] = array();
+    $group_references[$group_name] = &$element[$group_name];
+  }
+
+  // Loop through all form children looking for those that are supposed to be
+  // in groups, and insert placeholder element for the new group field in the
+  // correct location within the form structure.
+  $element_clone = array();
+  foreach (element_children($element) as $child_name) {
+    $element_clone[$child_name] = $element[$child_name];
+    // If this element is in a group, create the placeholder element.
+    if (isset($element['#group_children'][$child_name])) {
+      $element_clone[$element['#group_children'][$child_name]] = array();
+    }
+  }
+  $element = array_merge($element_clone, $element);
+
+  // Move all children to their parents. Use the flat list of references for
+  // direct access as we don't know where in the root_element hierarchy the
+  // parent currently is situated.
+  foreach ($element['#group_children'] as $child_name => $parent_name) {
+
+    // Entity being viewed
+    if ($vars) {
+      // If not a group, check vars['content'] for empty field.
+      if (!isset($element['#fieldgroups'][$child_name]) && isset($vars['content'][$child_name])) {
+        $group_references[$parent_name][$child_name] = $vars['content'][$child_name];
+        unset($vars['content'][$child_name]);
+      }
+      elseif (!isset($element['#fieldgroups'][$child_name]) && isset($vars['user_profile'][$child_name])) {
+        $group_references[$parent_name][$child_name] = $vars['user_profile'][$child_name];
+        unset($vars['user_profile'][$child_name]);
+      }
+      // If this is a group, we have to use a reference to keep the reference
+      // list intact (but if it is a field we don't mind).
+      else {
+        $group_references[$parent_name][$child_name] = &$element[$child_name];
+        unset($element[$child_name]);
+      }
+    }
+    // Form being viewed
+    else {
+
+      // Block denied fields (#access) before they are put in groups.
+      // Fields (not groups) that don't have children (like field_permissions) are removed
+      // in field_group_field_group_build_pre_render_alter.
+      if (isset($element[$child_name]) && (!isset($element[$child_name]['#access']) || $element[$child_name]['#access'])) {
+        // If this is a group, we have to use a reference to keep the reference
+        // list intact (but if it is a field we don't mind).
+        $group_references[$parent_name][$child_name] = &$element[$child_name];
+        $group_references[$parent_name]['#weight'] = $element['#fieldgroups'][$parent_name]->weight;
+      }
+
+      // The child has been copied to its parent: remove it from the root element.
+      unset($element[$child_name]);
+    }
+
+  }
+
+  // Bring extra element wrappers to achieve a grouping of fields.
+  // This will mainly be prefix and suffix altering.
+  foreach ($element['#fieldgroups'] as $group_name => $group) {
+    field_group_pre_render($group_references[$group_name], $group, $element);
+  }
+
+}
+
+/**
+ * Function to pre render the field group element.
+ *
+ * @see field_group_fields_nest()
+ *
+ * @param $element Array of group element that needs to be created!
+ * @param $group Object with the group information.
+ * @param $form The form object itself.
+ */
+function field_group_pre_render(& $element, $group, & $form) {
+
+  // Only run the pre_render function if the group has elements.
+  // $group->group_name
+  if ($element == array()) {
+    return;
+  }
+
+  // Let modules define their wrapping element.
+  // Note that the group element has no properties, only elements.
+  foreach (module_implements('field_group_pre_render') as $module) {
+    // The intention here is to have the opportunity to alter the
+    // elements, as defined in hook_field_group_formatter_info.
+    // Note, implement $element by reference!
+    $function = $module . '_field_group_pre_render';
+    $function($element, $group, $form);
+  }
+
+  // Allow others to alter the pre_render.
+  drupal_alter('field_group_pre_render', $element, $group, $form);
+
+}
+
+/**
+ * Helper function to prepare basic variables needed for most formatters.
+ *
+ * Called in field_group_field_group_pre_render(), but can also be called in
+ * other implementations of hook_field_group_pre_render().
+ */
+function field_group_pre_render_prepare(&$group) {
+
+  $classes = _field_group_get_html_classes($group);
+
+  $group->classes = implode(' ', $classes->required);
+  $group->description = !empty($group->format_settings['instance_settings']['description']) ? Xss::filterAdmin(t($group->format_settings['instance_settings']['description'])) : '';
+
+}
+
+/**
  * Saves a group definition.
  * This function is called by ctools export when calls are made
  * through ctools_export_crud_save().
@@ -454,7 +788,7 @@ function field_group_field_info_max_weight($entity_type, $bundle, $context, $con
  */
 function field_group_group_save(& $group) {
 
-  $config = \Drupal::config(_field_group_get_config_name($group));
+  $config = Drupal::config(_field_group_get_config_name($group));
 
   // Group is new.
   if ($config->isNew()) {
@@ -467,6 +801,17 @@ function field_group_group_save(& $group) {
 
   return $config->setData((array)$group)->save();
 
+}
+
+/**
+ * Delete a field group.
+ *
+ * @param $group
+ *   A group definition.
+ */
+function field_group_group_delete($group) {
+  Drupal::config(_field_group_get_config_name($group))->delete();
+  module_invoke_all('field_group_delete_field_group', $group);
 }
 
 /**
@@ -488,20 +833,20 @@ function field_group_info_groups($entity_type = NULL, $bundle = NULL, $context =
   static $groups = NULL;
 
   if (!isset($groups) || $reset) {
-    if (!$reset && $cache = \Drupal::cache()->get('field_groups')) {
+    if (!$reset && $cache = Drupal::cache()->get('field_groups')) {
       $groups = $cache->data;
     }
     else {
-      $field_group_configs = \Drupal::configFactory()->listAll('field_group.');
+      $field_group_configs = Drupal::configFactory()->listAll('field_group.');
       foreach ($field_group_configs as $config_name) {
-        $group = (object)\Drupal::config($config_name)->get();
+        $group = (object)Drupal::config($config_name)->get();
         $groups[$group->entity_type][$group->bundle][$group->context][$group->mode][$group->group_name] = $group;
       }
-      \Drupal::cache()->set('field_groups', $groups);
+      Drupal::cache()->set('field_groups', $groups);
     }
   }
 
-  \Drupal::moduleHandler()->alter('field_group_info', $groups);
+  Drupal::moduleHandler()->alter('field_group_info', $groups);
 
   if (!isset($entity_type)) {
     return $groups;
@@ -537,7 +882,7 @@ function field_group_info_groups($entity_type = NULL, $bundle = NULL, $context =
  *   The view mode to load.
  */
 function field_group_load_field_group($group_name, $entity_type, $bundle, $context, $mode) {
-  return (object)\Drupal::config('field_group.' . $entity_type . '.' . $bundle . '.' . $context . '.' . $mode . '.' . $group_name)->get();
+  return (object)Drupal::config('field_group.' . $entity_type . '.' . $bundle . '.' . $context . '.' . $mode . '.' . $group_name)->get();
 }
 
 /**
@@ -555,6 +900,495 @@ function field_group_load_field_group($group_name, $entity_type, $bundle, $conte
  *   The view mode context the group will be rendered.
  */
 function field_group_exists($group_name, $entity_type, $bundle, $context, $mode) {
-  $config = \Drupal::config('field_group.' . $entity_type . '.' . $bundle . '.' . $context . '.' . $mode . $group_name);
+  $config = Drupal::config('field_group.' . $entity_type . '.' . $bundle . '.' . $context . '.' . $mode . $group_name);
   return !$config->isNew();
+}
+
+/**
+ * Remove empty groups on forms.
+ *
+ * @param String $parent_name
+ *   The name of the element.
+ * @param array $element
+ *   The element to check the empty state.
+ * @param array $groups
+ *   Array of group objects.
+ */
+function field_group_remove_empty_form_groups($name, & $element, $groups, &$form_groups, $entity) {
+
+  $exceptions = array('user__account', 'comment__author');
+
+  $children = element_children($element);
+
+  $hasChildren = FALSE;
+  if (count($children)) {
+    foreach ($children as $childname) {
+
+      if (in_array($childname, $groups)) {
+        field_group_remove_empty_form_groups($childname, $element[$childname], $groups, $form_groups, $entity);
+      }
+      $exception = $entity . '__' . $childname;
+      $hasChildren = $hasChildren ? TRUE : (isset($element[$childname]['#type']) || isset($element[$childname]['#markup']) || in_array($exception, $exceptions));
+
+    }
+  }
+
+  if (!$hasChildren) {
+
+    // Remove empty elements from the #groups.
+    if (empty($element) && isset($form_groups[$name]) && !is_array($form_groups[$name])) {
+      foreach ($form_groups as $group_name => $group) {
+        if (isset($group->children)) {
+          $group_children = array_flip($group->children);
+          if (isset($group_children[$name])) {
+            unset($form_groups[$group_name]->children[$group_children[$name]]);
+          }
+        }
+      }
+    }
+
+    $element['#access'] = FALSE;
+
+  }
+
+}
+
+/**
+ * Remove empty groups on entity display.
+ * @param array $element
+ *   The element to check the empty state.
+ * @param array $groups
+ *   Array of group objects.
+ */
+function field_group_remove_empty_display_groups(& $element, $groups) {
+
+  $empty_child = TRUE;
+  $empty_group = TRUE;
+
+  // Loop through the children for current element.
+  foreach (Element::children($element) as $name) {
+
+    // Descend if the child is a group.
+    if (in_array($name, $groups)) {
+      $empty_child = field_group_remove_empty_display_groups($element[$name], $groups);
+      if (!$empty_child) {
+        $empty_group = FALSE;
+      }
+    }
+    // Child is a field, the element is not empty and access is set to true (or empty).
+    elseif (!empty($element[$name]) && (!isset($element[$name]['#access']) || $element[$name]['#access'])) {
+      $empty_group = FALSE;
+    }
+
+  }
+
+  // Reset an empty group.
+  if ($empty_group) {
+    $element = NULL;
+  }
+
+  return $empty_group;
+
+}
+
+/**
+ * Implements field_group_pre_render_<format-type>.
+ * Format type: Vertical tab.
+ *
+ * @param $element The field group form element.
+ * @param $group The Field group object prepared for pre_render.
+ * @param $form The root element or form.
+ */
+function field_group_pre_render_tab(&$element, $group, &$form) {
+
+  $view_mode = isset($form['#view_mode']) ? $form['#view_mode'] : 'form';
+
+  // Could be it never runs through htab.
+  $form['#attached']['js'][] = array(
+    'data' => array('field_group' => array('tabs' => $view_mode)),
+    'type' => 'setting',
+  );
+
+  $add = array(
+    '#type' => 'fieldset',
+    '#id' => 'edit-' . $group->group_name,
+    '#title' => check_plain(t($group->label)),
+    '#collapsible' => $group->collapsible,
+    '#collapsed' => $group->collapsed,
+    '#attributes' => array('class' => explode(" ", $group->classes)),
+    '#description' => $group->description,
+  );
+
+  // Front-end and back-end on configuration will lead
+  // to vertical tabs nested in a separate vertical group.
+  if ($view_mode != 'form') {
+    $add['#group'] = empty($group->parent_name) ? 'additional_settings' : $group->parent_name;
+    $add['#parents'] = array($add['#group']);
+    $element += $add;
+  }
+  // Form fieldgroups which are nested into a vertical tab group
+  // are handled a little different.
+  elseif (!empty($group->parent_name)) {
+    $add['#group'] = $group->parent_name;
+    $element += $add;
+  }
+  // Forms "can" have additional settins. We'll try to locate it first, if not
+  // exists, field_group will create a parallel additional settings entry.
+  else {
+    // Create the fieldgroup element.
+    $add['#parents'] = array('additional_settings');
+    $add['#group'] = 'additional_settings';
+    $add['#weight'] = -30 + $group->weight; // hardcoded to bring our extra additional vtabs on top.
+
+    // Check if the additional_settings exist for this type of form.
+    if (isset($form['additional_settings']['group']['#groups']['additional_settings'])) {
+
+      // Merge fieldgroups with the core additional settings.
+      $form['additional_settings']['group']['#groups']['additional_settings'][$group->group_name] = $add;
+      $form['additional_settings']['group']['#groups'][$group->group_name] = array('#group_exists' => TRUE);
+      // Nest the fields inside the appropriate structure.
+      foreach (element_children($element) as $fieldname) {
+        $form['additional_settings']['group']['#groups']['additional_settings'][$group->group_name][$fieldname] = &$element[$fieldname];
+        unset($element[$fieldname]);
+      }
+    }
+    // Assumption the wrapper is in the root. This could be done by field_group itself
+    // in previous loop of tabs in same wrapper or even some other contrib / custom module.
+    else {
+      if (!isset($form['additional_settings']['#type'])) {
+        $form['additional_settings'] = array(
+          '#type' => 'vertical_tabs',
+          '#weight' => $group->weight,
+          '#theme_wrappers' => array('vertical_tabs'),
+          '#prefix' => '<div class="field-group-' . $group->format_type . '-wrapper">',
+          '#suffix' => '</div>',
+        );
+        $form['#attached']['library'][] = array('system', 'drupal.collapse');
+      }
+      $form['additional_settings'][$group->group_name] = $add;
+      // Nest the fields inside the appropriate structure.
+      foreach (element_children($element) as $fieldname) {
+        $form['additional_settings'][$group->group_name][$fieldname] = &$element[$fieldname];
+        unset($element[$fieldname]);
+      }
+    }
+  }
+
+}
+
+/**
+ * Implements field_group_pre_render_<format-type>.
+ * Format type: Fieldset.
+ *
+ * @param $element The field group form element.
+ * @param $group The Field group object prepared for pre_render.
+ * @param $form The root element or form.
+ */
+function field_group_pre_render_fieldset(&$element, $group, &$form) {
+
+  $element += array(
+    '#type' => 'fieldset',
+    '#id' => drupal_html_id($group->group_name),
+    '#title' => check_plain(t($group->label)),
+    '#collapsible' => $group->collapsible,
+    '#collapsed' => $group->collapsed,
+    '#pre_render' => array(),
+    '#attributes' => array('class' => explode(' ', $group->classes)),
+    '#description' => $group->description,
+  );
+
+  // @TODO fieldsets are not collapsible anymore.
+  if ($group->collapsible || $group->collapsed) {
+  }
+}
+
+/**
+ * Implements field_group_pre_render_<format-type>.
+ * Format type: HTML element.
+ *
+ * @param $element The field group form element.
+ * @param $group The Field group object prepared for pre_render.
+ * @param $form The root element or form.
+ */
+function field_group_pre_render_html_element(&$element, $group, &$form) {
+  $html_element = isset($group->format_settings['instance_settings']['element']) ? $group->format_settings['instance_settings']['element'] : 'div';
+  $show_label = isset($group->format_settings['instance_settings']['show_label']) ? $group->format_settings['instance_settings']['show_label'] : 0;
+  $label_element = isset($group->format_settings['instance_settings']['label_element']) ? $group->format_settings['instance_settings']['label_element'] : 'div';
+  $attributes = isset($group->format_settings['instance_settings']['attributes']) ? ' ' . $group->format_settings['instance_settings']['attributes'] : '';
+  $group->classes = trim($group->classes);
+
+  // This regex split the attributes string so that we can pass that
+  // later to drupal_attributes().
+  preg_match_all('/([^\s=]+)="([^"]+)"/', $attributes, $matches);
+
+  $element_attributes = array();
+  // Put the attribute and the value together.
+  foreach ($matches[1] as $key => $attribute) {
+    $element_attributes[$attribute] = $matches[2][$key];
+  }
+
+  // Add the classes to the attributes array.
+  if (!isset($element_attributes['class']) && $group->classes) {
+    $element_attributes['class'] = $group->classes;
+  }
+  elseif (isset($element_attributes['class']) && $group->classes) {
+    $element_attributes['class'] .= ' ' . $group->classes;
+  }
+
+  $attributes = drupal_attributes($element_attributes);
+
+  $element['#prefix'] = '<' . $html_element . $attributes . '>';
+  if ($show_label) {
+    $element['#prefix'] .= '<' . $label_element . '><span>' . check_plain(t($group->label)) . '</span></' . $label_element . '>';
+  }
+  $element['#suffix'] = '</' . $html_element . '>';
+}
+
+/**
+ * Implements field_group_pre_render_<format-type>.
+ * Format type: Div.
+ *
+ * @param $element The field group form element.
+ * @param $group The Field group object prepared for pre_render.
+ * @param $form The root element or form.
+ */
+function field_group_pre_render_div(&$element, $group, &$form) {
+
+  $show_label = isset($group->format_settings['instance_settings']['show_label']) ? $group->format_settings['instance_settings']['show_label'] : 0;
+  $label_element = isset($group->format_settings['instance_settings']['label_element']) ? $group->format_settings['instance_settings']['label_element'] : 'h2';
+  $effect = isset($group->format_settings['instance_settings']['effect']) ? $group->format_settings['instance_settings']['effect'] : 'none';
+
+  $element['#type'] = 'markup';
+  $id = isset($element['#id']) ? ' id="' . $element['#id'] . '"' : '';
+
+  if ($group->format_settings['formatter'] != 'open') {
+
+    $element['#prefix'] = '<div' . $id . ' class="' . $group->classes . '">
+      <' . $label_element . '><span class="field-group-format-toggler">' . check_plain(t($group->label)) . '</span></' . $label_element . '>
+      <div class="field-group-format-wrapper" style="display: ' . (!empty($group->collapsed) ? 'none' : 'block') . ';">';
+    $element['#suffix'] = '</div></div>';
+  }
+  else {
+    $class_attribute = !empty($group->classes) ? ' class="' . $group->classes . '"' : '';
+
+    $element['#prefix'] = '<div' . $id . $class_attribute . '>';
+    if ($show_label) {
+      $element['#prefix'] .= '<' . $label_element . '><span>' . check_plain(t($group->label)) . '</span></' . $label_element . '>';
+    }
+    $element['#suffix'] = '</div>';
+  }
+  if (!empty($group->description)) {
+    $element['#prefix'] .= '<div class="description">' . $group->description . '</div>';
+  }
+
+  if ($effect == 'blind') {
+    $element['#attached']['library'][] = array('system', 'effects.blind');
+  }
+
+}
+
+/**
+ * Implements field_group_pre_render_<format-type>.
+ * Format type: HTML5.
+ *
+ * @param $element The field group form element.
+ * @param $group The Field group object prepared for pre_render.
+ * @param $form The root element or form.
+ */
+function field_group_pre_render_html5(&$element, $group, &$form) {
+  $id = !empty($element['#id']) ? ' id="' . $element['#id'] . '"' : '';
+  $class = !empty($group->classes) ? ' class="' . $group->classes . '"' : '';
+  $element += array(
+    '#type' => 'markup',
+    '#prefix' => '<' . $group->format_settings['instance_settings']['wrapper'] . $id . $class . '>',
+    '#suffix' => '</' . $group->format_settings['instance_settings']['wrapper'] . '>',
+  );
+}
+
+/**
+ * Implements field_group_pre_render_<format-type>.
+ * Format type: Accordion.
+ *
+ * @param $element The field group form element.
+ * @param $group The Field group object prepared for pre_render.
+ * @param $form The root element or form.
+ */
+function field_group_pre_render_accordion(&$element, $group, &$form) {
+
+  // Add the jQuery UI accordion.
+  $element['#attached']['library'][] = 'field_group/accordion';
+
+  $element += array(
+    '#type' => 'markup',
+    '#prefix' => '<div class="' . $group->classes . '">',
+    '#suffix' => '</div>',
+  );
+}
+
+/**
+ * Implements field_group_pre_render_<format-type>.
+ * Format type: Accordion item.
+ *
+ * @param $element The field group form element.
+ * @param $group The Field group object prepared for pre_render.
+ * @param $form The root element or form.
+ */
+function field_group_pre_render_accordion_item(&$element, $group, &$form) {
+
+  $element += array(
+    '#type' => 'markup',
+    '#prefix' => '<h3 class="field-group-format-toggler ' . $group->format_type . ($group->collapsed ? '' : ' field-group-accordion-active') . '"><a href="#">' . check_plain(t($group->label)) . '</a></h3>
+    <div class="field-group-format-wrapper ' . $group->classes . '">',
+    '#suffix' => '</div>',
+    //'#attributes' => array('class' => array($group->format_type)),
+  );
+  if (!empty($group->description)) {
+    $element['#prefix'] .= '<div class="description">' . $group->description . '</div>';
+  }
+
+}
+
+/**
+ * Implements field_group_pre_render_<format-type>.
+ * Format type: Horizontal tabs group.
+ *
+ * @param $element The field group form element.
+ * @param $group The Field group object prepared for pre_render.
+ * @param $form The root element or form.
+ */
+function field_group_pre_render_htabs(&$element, $group, &$form) {
+
+  $element += array(
+    '#type' => 'horizontal_tabs',
+    '#title' => check_plain(t($group->label)),
+    '#theme_wrappers' => array('horizontal_tabs'),
+    '#prefix' => '<div class="field-group-' . $group->format_type . '-wrapper ' . $group->classes . '">',
+    '#suffix' => '</div>',
+  );
+
+  // By default vertical_tabs don't have titles but you can override it in the theme.
+  if (!empty($group->label)) {
+    $element['#title'] = check_plain($group->label);
+  }
+
+  // Only add form.js on forms.
+  if (!empty($form['#type']) && $form['#type'] == 'form') {
+    $element['#attached']['js'][] = 'misc/form.js';
+  }
+
+  $element['#attached']['library'][] = array('field_group', 'horizontal-tabs');
+}
+
+/**
+ * Implements field_group_pre_render_<format-type>.
+ * Format type: Horizontal tab.
+ *
+ * @param $element The field group form element.
+ * @param $group The Field group object prepared for pre_render.
+ * @param $form The root element or form.
+ */
+function field_group_pre_render_htab(&$element, $group, &$form) {
+
+  $element += array(
+    '#type' => 'fieldset',
+    '#title' => check_plain(t($group->label)),
+    '#collapsible' => $group->collapsible,
+    '#collapsed' => $group->collapsed,
+    '#attributes' => array('class' => explode(" ", $group->classes)),
+    '#group' => $group->parent_name,
+    // very important. Cannot be added on the form!
+    '#parents' => array($group->parent_name),
+    '#description' => $group->description,
+  );
+
+}
+
+/**
+ * Implements field_group_pre_render_<format-type>.
+ * Format type: Multipage group.
+ *
+ * @param $element The field group form element.
+ * @param $group The Field group object prepared for pre_render.
+ * @param $form The root element or form.
+ */
+function field_group_pre_render_multipage_group(&$element, &$group, &$form) {
+
+  $multipage_element = array(
+    '#type' => 'multipage',
+    '#theme_wrappers' => array('multipage'),
+    '#prefix' => '<div class="field-group-' . $group->format_type . '-wrapper ' . $group->classes . '">',
+    '#suffix' => '</div>',
+  );
+
+  $element += $multipage_element;
+
+  $move_additional = isset($group->format_settings['instance_settings']['move_additional']) ? ($group->format_settings['instance_settings']['move_additional'] && isset($form['additional_settings'])) : isset($form['additional_settings']);
+  $move_button = isset($group->format_settings['instance_settings']['move_button']) ? $group->format_settings['instance_settings']['move_button'] : 0;
+
+  drupal_add_js(array(
+    'field_group' => array(
+      'multipage_move_submit' => (bool) $move_button,
+      'multipage_move_additional' => (bool) $move_additional
+    )
+  ), 'setting');
+
+}
+
+/**
+ * Implements field_group_pre_render_<format-type>.
+ * Format type: Multipage.
+ *
+ * @param $element The field group form element.
+ * @param $group The Field group object prepared for pre_render.
+ * @param $form The root element or form.
+ */
+function field_group_pre_render_multipage(&$element, $group, &$form) {
+
+  $group->classes .= $group->format_settings['formatter'] == 'start' ? ' multipage-open' : ' multipage-closed';
+  $element += array(
+    '#type' => 'multipage_pane',
+    '#title' => check_plain(t($group->label)),
+    '#collapsible' => $group->collapsible,
+    '#collapsed' => $group->collapsed,
+    '#attributes' => array('class' => explode(" ", $group->classes)),
+    '#group' => $group->parent_name,
+    '#group_object' => $group,
+    '#parent_group_object' => $form['#groups'][$group->parent_name],
+    // very important. Cannot be added on the form!
+    '#parents' => array($group->parent_name),
+    '#description' => $group->description,
+  );
+
+  $element['#attached']['library'][] = array('field_group', 'multipage');
+}
+
+/**
+ * Implements field_group_pre_render_<format-type>.
+ * Format type: Vertical tabs wrapper.
+ *
+ * @param $element The field group form element.
+ * @param $group The Field group object prepared for pre_render.
+ * @param $form The root element or form.
+ */
+function field_group_pre_render_tabs(&$element, $group, &$form) {
+
+  $element += array(
+    '#type' => 'vertical_tabs',
+    '#theme_wrappers' => array('vertical_tabs'),
+    '#prefix' => '<div class="field-group-' . $group->format_type . '-wrapper ' . $group->classes . '">',
+    '#suffix' => '</div>',
+  );
+
+  // By default vertical_tabs don't have titles but you can override it in the theme.
+  if (!empty($group->label)) {
+    $element['#title'] = check_plain($group->label);
+  }
+
+  $element[$group->group_name . '__active_tab'] = array(
+    '#type' => 'hidden',
+    '#default_value' => '',
+    '#attributes' => array('class' => array('vertical-tabs-active-tab')),
+  );
+
+  $element['#attached']['library'][] = array('system', 'drupal.collapse');
 }
