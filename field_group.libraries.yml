@@ -7,10 +7,17 @@ core:
         css/field_group-rtl.css: {}
         css/field_group.css: {}
 
-accordion:
+formatter.accordion:
   version: VERSION
   js:
     formatters/accordion/accordion.js: {}
   dependencies:
     - field_group/core
     - core/jquery.ui.accordion
+
+formatter.div:
+  version: VERSION
+  js:
+    formatters/div/div.js: {}
+  dependencies:
+    - field_group/core
