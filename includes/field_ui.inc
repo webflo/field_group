@@ -7,6 +7,7 @@
  */
 
 use Drupal\Core\Url;
+use Drupal\Core\Render\Element;
 
 /**
  * Helper function to get the form parameters to use while
@@ -74,7 +75,7 @@ function field_group_field_ui_display_form_alter(&$form, &$form_state, $context)
   $table['#parent_options']['_add_new_group'] = t('Add new group');
 
   // Update existing rows accordingly to the parents.
-  foreach (element_children($table) as $name) {
+  foreach (Element::children($table) as $name) {
     $table[$name]['parent_wrapper']['parent']['#options'] = $table['#parent_options'];
     // Inherit the value of the parent when default value is empty.
     if (empty($table[$name]['parent_wrapper']['parent']['#default_value'])) {

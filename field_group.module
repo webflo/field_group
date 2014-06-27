@@ -1002,7 +1002,7 @@ function field_group_remove_empty_display_groups(& $element, $groups) {
 function field_group_pre_render_tab(&$element, $group, &$rendering_object) {
 
   $add = array(
-    '#type' => 'fieldset',
+    '#type' => 'details',
     '#id' => 'edit-' . $group->group_name,
     '#title' => check_plain(t($group->label)),
     '#collapsible' => $group->collapsible,
@@ -1013,15 +1013,9 @@ function field_group_pre_render_tab(&$element, $group, &$rendering_object) {
 
   // Front-end and back-end on configuration will lead
   // to vertical tabs nested in a separate vertical group.
-  if ($group->context != 'form') {
-    $add['#group'] = empty($group->parent_name) ? 'additional_settings' : $group->parent_name;
+  if ($group->context != 'form' || !empty($group->parent_name)) {
+    $add['#group'] = empty($group->parent_name) ? '' : $group->parent_name;
     $add['#parents'] = array($add['#group']);
-    $element += $add;
-  }
-  // Form fieldgroups which are nested into a vertical tab group
-  // are handled a little different.
-  elseif (!empty($group->parent_name)) {
-    $add['#group'] = $group->parent_name;
     $element += $add;
   }
   // Forms "can" have additional settins. We'll try to locate it first, if not
@@ -1400,18 +1394,22 @@ function field_group_pre_render_tabs(&$element, $group, &$rendering_object) {
     '#theme_wrappers' => array('vertical_tabs'),
     '#prefix' => '<div class="field-group-' . $group->format_type . '-wrapper ' . $group->classes . '">',
     '#suffix' => '</div>',
+    '#tree' => TRUE,
+    '#parents' => array($group->group_name),
+    '#default_tab' => '',
   );
+
+  $form_state = array();
+  $element = form_process_vertical_tabs($element, $form_state);
+
+  // Make sure the group has 1 child. This is needed to succeed at form_pre_render_vertical_tabs().
+  // Skipping this would force us to move all child groups to this array, making it an un-nestable.
+  $element['group']['#groups'][$group->group_name] = array(0 => array());
+  $element['group']['#groups'][$group->group_name]['#group_exists'] = TRUE;
 
   // By default vertical_tabs don't have titles but you can override it in the theme.
   if (!empty($group->label)) {
     $element['#title'] = check_plain($group->label);
   }
 
-  $element[$group->group_name . '__active_tab'] = array(
-    '#type' => 'hidden',
-    '#default_value' => '',
-    '#attributes' => array('class' => array('vertical-tabs-active-tab')),
-  );
-
-  $element['#attached']['library'][] = array('system', 'drupal.collapse');
 }
