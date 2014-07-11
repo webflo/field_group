@@ -39,6 +39,47 @@ function field_group_theme_registry_alter(&$theme_registry) {
 }
 
 /**
+ * Implements hook_theme().
+ */
+function field_group_theme() {
+  return array(
+    'horizontal_tabs' => array(
+      'render element' => 'element',
+      'template' => 'horizontal-tabs',
+    ),
+    'multipage' => array(
+      'render element' => 'element',
+    ),
+    'multipage_pane' => array(
+      'render element' => 'element',
+    ),
+  );
+}
+
+/**
+ * Implements hook_element_info().
+ */
+function field_group_element_info() {
+  $types['horizontal_tabs'] = array(
+    '#theme_wrappers' => array('horizontal_tabs'),
+    '#default_tab' => '',
+    '#process' => array('form_process_horizontal_tabs'),
+  );
+  $types['multipage'] = array(
+    '#theme_wrappers' => array('multipage'),
+    '#default_tab' => '',
+    '#process' => array('form_process_multipage'),
+  );
+  $types['multipage_pane'] = array(
+    '#value' => NULL,
+    '#process' => array('form_process_fieldset', 'ajax_process_form'),
+    '#pre_render' => array('form_pre_render_fieldset'),
+    '#theme_wrappers' => array('multipage_pane'),
+  );
+  return $types;
+}
+
+/**
  * Implements hook_field_group_formatter_info().
  */
 function field_group_field_group_formatter_info() {
@@ -553,6 +594,80 @@ function field_group_field_group_build_pre_render_alter(& $element) {
 }
 
 /**
+ * Creates a group formatted as horizontal tabs.
+ * This function will never be callable from within field_group rendering. Other
+ * modules using #type horizontal_tabs will have the benefit of this processor.
+ *
+ * @param $element
+ *   An associative array containing the properties and children of the
+ *   fieldset.
+ * @param $form_state
+ *   The $form_state array for the form this horizontal tab widget belongs to.
+ * @return
+ *   The processed element.
+ */
+function form_process_horizontal_tabs($element, &$form_state, $on_form = TRUE) {
+
+  // Inject a new details as child, so that form_process_details() processes
+  // this details element like any other details.
+  $element['group'] = array(
+    '#type' => 'details',
+    '#theme_wrappers' => array(),
+    '#parents' => $element['#parents'],
+  );
+
+  // Add an invisible label for accessibility.
+  if (!isset($element['#title'])) {
+    $element['#title'] = t('Horizontal Tabs');
+    $element['#title_display'] = 'invisible';
+  }
+
+  // Add required JavaScript and Stylesheet.
+  $element['#attached']['library'][] = 'field_group/formatter.horizontal_tabs';
+
+  // Only add forms library on forms.
+  if ($on_form) {
+    $element['#attached']['library'][] = 'core/drupal.form';
+  }
+
+  // The JavaScript stores the currently selected tab in this hidden
+  // field so that the active tab can be restored the next time the
+  // form is rendered, e.g. on preview pages or when form validation
+  // fails.
+  $name = implode('__', $element['#parents']);
+  if (isset($form_state['values'][$name . '__active_tab'])) {
+    $element['#default_tab'] = $form_state['values'][$name . '__active_tab'];
+  }
+  $element[$name . '__active_tab'] = array(
+    '#type' => 'hidden',
+    '#default_value' => $element['#default_tab'],
+    '#attributes' => array('class' => array('horizontal-tabs-active-tab')),
+  );
+
+  return $element;
+
+}
+
+/**
+ * Returns HTML for an element's children fieldsets as horizontal tabs.
+ *
+ * @param $variables
+ *   An associative array containing:
+ *   - element: An associative array containing the properties and children of the
+ *     fieldset. Properties used: #children.
+ *
+ * @ingroup themeable
+ */
+function theme_horizontal_tabs($variables) {
+  $element = $variables['element'];
+
+  $output = '<h2 class="element-invisible">' . (!empty($element['#title']) ? $element['#title'] : t('Horizontal Tabs')) . '</h2>';
+  $output .= '<div class="horizontal-tabs-panes">' . $element['#children'] . '</div>';
+
+  return $output;
+}
+
+/**
  * Attach groups to the (form) build.
  *
  * @param Array $element
@@ -636,8 +751,6 @@ function field_group_build_entity_groups(&$vars, $context = 'view') {
     }
   }
 
-  // New css / js can be attached.
-//  drupal_process_attached($element);
 }
 
 /**
@@ -1269,19 +1382,21 @@ function field_group_pre_render_htabs(&$element, $group, &$rendering_object) {
     '#theme_wrappers' => array('horizontal_tabs'),
     '#prefix' => '<div class="field-group-' . $group->format_type . '-wrapper ' . $group->classes . '">',
     '#suffix' => '</div>',
+    '#tree' => TRUE,
+    '#parents' => array($group->group_name),
+    '#default_tab' => '',
   );
+
+  $form_state = array();
+  $element = form_process_horizontal_tabs($element, $form_state, $group->context == 'form');
+
+  $element['group']['#groups'][$group->group_name] = array(0 => array());
+  $element['group']['#groups'][$group->group_name]['#group_exists'] = TRUE;
 
   // By default vertical_tabs don't have titles but you can override it in the theme.
   if (!empty($group->label)) {
     $element['#title'] = check_plain($group->label);
   }
-
-  // Only add form.js on forms.
-  if ($group->context == 'form') {
-    $element['#attached']['js'][] = 'misc/form.js';
-  }
-
-  $element['#attached']['library'][] = array('field_group', 'horizontal-tabs');
 }
 
 /**
@@ -1296,6 +1411,10 @@ function field_group_pre_render_htabs(&$element, $group, &$rendering_object) {
  *   The entity / form beïng rendered.
  */
 function field_group_pre_render_htab(&$element, $group, &$rendering_object) {
+
+  field_group_pre_render_tab($element, $group, $rendering_object);
+
+  return;
 
   $element += array(
     '#type' => 'fieldset',
@@ -1412,4 +1531,20 @@ function field_group_pre_render_tabs(&$element, $group, &$rendering_object) {
     $element['#title'] = check_plain($group->label);
   }
 
+}
+
+/**
+ * Prepares variables for horizontal tabs templates.
+ *
+ * Default template: horizontal-tabs.html.twig.
+ *
+ * @param array $variables
+ *   An associative array containing:
+ *   - element: An associative array containing the properties and children of
+ *     the details element. Properties used: #children.
+ *
+ */
+function template_preprocess_horizontal_tabs(&$variables) {
+  $element = $variables['element'];
+  $variables['children'] = (!empty($element['#children'])) ? $element['#children'] : '';
 }
