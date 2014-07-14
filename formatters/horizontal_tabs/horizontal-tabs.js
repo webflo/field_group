@@ -1,5 +1,29 @@
 (function ($) {
 
+Drupal.FieldGroup = Drupal.FieldGroup || {};
+Drupal.FieldGroup.Effects = Drupal.FieldGroup.Effects || {};
+
+/**
+ * Implements Drupal.FieldGroup.processHook().
+ */
+Drupal.FieldGroup.Effects.processHtabs = {
+  execute: function (context, settings, type) {
+    if (type == 'form') {
+      // Add required fields mark to any element containing required fields
+      $('fieldset.horizontal-tabs-pane', context).once('fieldgroup-effects', function(i) {
+        if ($(this).is('.required-fields') && $(this).find('.form-required').length > 0) {
+          $(this).data('horizontalTab').link.find('strong:first').after($('.form-required').eq(0).clone()).after(' ');
+        }
+        if ($('.error', $(this)).length) {
+          $(this).data('horizontalTab').link.parent().addClass('error');
+          Drupal.FieldGroup.setGroupWithfocus($(this));
+          $(this).data('horizontalTab').focus();
+        }
+      });
+    }
+  }
+}
+
 /**
  * This script transforms a set of fieldsets into a stack of horizontal
  * tabs. Another tab pane can be selected by clicking on the respective
@@ -20,10 +44,7 @@ Drupal.behaviors.horizontalTabs = {
 
     $(context).find('[data-horizontal-tabs-panes]').once('horizontal-tabs', function () {
 
-      var $this = $(this).addClass('vertical-tabs-panes');
-      var focusID = $this.find(':hidden.vertical-tabs-active-tab').val();
-      var tab_focus;
-
+      var $this = $(this).addClass('horizontal-tabs-panes');
       var focusID = $(':hidden.horizontal-tabs-active-tab', this).val();
       var tab_focus;
 

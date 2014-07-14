@@ -98,11 +98,6 @@ function field_group_field_group_formatter_info() {
         'instance_settings' => array('description' => '', 'show_label' => 1, 'label_element' => 'h3', 'effect' => 'none', 'speed' => 'fast', 'classes' => '', 'required_fields' => 1, 'id' => ''),
         'default_formatter' => 'open',
       ),
-      'html5' => array(
-        'label' => t('HTML5'),
-        'description' => t('This fieldgroup renders the inner content in a semantic HTML5 wrapper'),
-        'instance_settings' => array('wrapper' => '', 'classes' => '', 'id' => ''),
-      ),
       'fieldset' => array(
         'label' => t('Fieldset'),
         'description' => t('This fieldgroup renders the inner content in a fieldset with the title as legend.'),
@@ -169,11 +164,6 @@ function field_group_field_group_formatter_info() {
         'format_types' => array('open', 'collapsible', 'collapsed'),
         'instance_settings' => array('description' => '', 'show_label' => 1, 'label_element' => 'h3', 'effect' => 'none', 'speed' => 'fast', 'classes' => '', 'id' => ''),
         'default_formatter' => 'collapsible',
-      ),
-      'html5' => array(
-        'label' => t('HTML5'),
-        'description' => t('This fieldgroup renders the inner content in a semantic HTML5 wrapper'),
-        'instance_settings' => array('wrapper' => '', 'classes' => '', 'id' => ''),
       ),
       'fieldset' => array(
         'label' => t('Fieldset'),
@@ -370,14 +360,6 @@ function field_group_field_group_format_settings($group) {
         '#weight' => 3,
       );
       break;
-    case 'html5':
-      $form['instance_settings']['wrapper'] = array(
-        '#title' => t('HTML5 wrapper'),
-        '#type' => 'select',
-        '#options' => array('section' => t('Section'), 'article' => t('Article'), 'header' => t('Header'), 'footer' => t('Footer'), 'aside' => t('Aside')),
-        '#default_value' => isset($group->format_settings['instance_settings']['wrapper']) ? $group->format_settings['instance_settings']['wrapper'] : 'section',
-      );
-      break;
     case 'fieldset':
       $form['label']['#description'] = t('Please enter a label');
       break;
@@ -513,10 +495,43 @@ function field_group_field_info_max_weight($entity_type, $bundle, $context, $con
 }
 
 /**
+ * Implements hook_field_attach_form().
+ */
+function field_group_field_attach_form($entity_type, $entity, &$form, &$form_state, $langcode) {
+
+  $form['#attached']['css'][] = drupal_get_path('module', 'field_group') . '/field_group.field_ui.css';
+
+  $context = array(
+    'entity_type' => $entity_type,
+    'bundle' => '',
+    'mode' => '',
+    'context' => 'form',
+  );
+
+  field_group_attach_groups($form, 'form', $form_state);
+  $form['#pre_render'][] = 'field_group_form_pre_render';
+}
+
+/**
  * Implements hook_entity_display_build_alter().
  */
 function field_group_entity_display_build_alter(&$element, $context) {
-  field_group_attach_groups($element, $context, 'view');
+
+  $context['entity_type'] = $context['display']->targetEntityType;
+  $context['bundle'] = $context['display']->bundle;
+  $context['mode'] = $context['display']->mode;
+  $context['context'] = 'view';
+
+  field_group_attach_groups($element, $context);
+}
+
+/**
+ * Pre render callback for rendering groups.
+ * @see field_group_field_attach_form
+ * @param $element Form that is being rendered.
+ */
+function field_group_form_pre_render(&$element) {
+  return field_group_build_entity_groups($element, 'form');
 }
 
 /**
@@ -672,20 +687,17 @@ function theme_horizontal_tabs($variables) {
  *
  * @param Array $element
  *   The part of the form.
- *  @param Array $display_object_context
- *   The display object context.
- * @param $string $context
- *   The display context (form or view).
- * @param Array $form_state
- *   The optional form state when in form context.
+ *  @param Array $context
+ *   The contextual information.
  */
-function field_group_attach_groups(&$element, $display_object_context, $context, $form_state = array()) {
+function field_group_attach_groups(&$element, $context) {
 
-  $entity_type = $display_object_context['display']->targetEntityType;
-  $bundle = $display_object_context['display']->bundle;
-  $mode = $display_object_context['display']->mode;
+  $entity_type = $context['entity_type'];
+  $bundle = $context['bundle'];
+  $mode = $context['mode'];
+  $display_context = $context['context'];
 
-  $element['#groups'] = field_group_info_groups($entity_type, $bundle, $context, $mode);
+  $element['#groups'] = field_group_info_groups($entity_type, $bundle, $display_context, $mode);
   $element['#fieldgroups'] = $element['#groups'];
 
   // Create a lookup array.
@@ -1211,6 +1223,7 @@ function field_group_pre_render_fieldset(&$element, $group, &$rendering_object) 
  *   The entity / form beïng rendered.
  */
 function field_group_pre_render_html_element(&$element, $group, &$rendering_object) {
+
   $html_element = isset($group->format_settings['instance_settings']['element']) ? $group->format_settings['instance_settings']['element'] : 'div';
   $show_label = isset($group->format_settings['instance_settings']['show_label']) ? $group->format_settings['instance_settings']['show_label'] : 0;
   $label_element = isset($group->format_settings['instance_settings']['label_element']) ? $group->format_settings['instance_settings']['label_element'] : 'div';
@@ -1221,23 +1234,24 @@ function field_group_pre_render_html_element(&$element, $group, &$rendering_obje
   // later to drupal_attributes().
   preg_match_all('/([^\s=]+)="([^"]+)"/', $attributes, $matches);
 
-  $element_attributes = array();
+  $element_attributes = new Drupal\Core\Template\Attribute();
   // Put the attribute and the value together.
   foreach ($matches[1] as $key => $attribute) {
     $element_attributes[$attribute] = $matches[2][$key];
   }
 
   // Add the classes to the attributes array.
-  if (!isset($element_attributes['class']) && $group->classes) {
-    $element_attributes['class'] = $group->classes;
-  }
-  elseif (isset($element_attributes['class']) && $group->classes) {
-    $element_attributes['class'] .= ' ' . $group->classes;
+  if ($group->classes) {
+
+    if (!isset($element_attributes['class'])) {
+      $element_attributes['class'] = array();
+    }
+
+    $element_attributes['class'][] = $group->classes;
+
   }
 
-  $attributes = drupal_attributes($element_attributes);
-
-  $element['#prefix'] = '<' . $html_element . $attributes . '>';
+  $element['#prefix'] = '<' . $html_element . $element_attributes . '>';
   if ($show_label) {
     $element['#prefix'] .= '<' . $label_element . '><span>' . check_plain(t($group->label)) . '</span></' . $label_element . '>';
   }
@@ -1291,27 +1305,6 @@ function field_group_pre_render_div(&$element, $group, &$rendering_object) {
     $element['#prefix'] .= '<div class="description">' . $group->description . '</div>';
   }
 
-}
-
-/**
- * Implements field_group_pre_render_<format-type>.
- * Format type: HTML5.
- *
- * @param $element
- *   The field group render array.
- * @param $group
- *   The Field group object prepared for pre_render.
- * @param $rendering_object
- *   The entity / form beïng rendered.
- */
-function field_group_pre_render_html5(&$element, $group, &$rendering_object) {
-  $id = !empty($element['#id']) ? ' id="' . $element['#id'] . '"' : '';
-  $class = !empty($group->classes) ? ' class="' . $group->classes . '"' : '';
-  $element += array(
-    '#type' => 'markup',
-    '#prefix' => '<' . $group->format_settings['instance_settings']['wrapper'] . $id . $class . '>',
-    '#suffix' => '</' . $group->format_settings['instance_settings']['wrapper'] . '>',
-  );
 }
 
 /**

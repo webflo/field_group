@@ -9,7 +9,7 @@
     margin: 0 0 1em 0;
 }
 
-.horizontal-tabs-list {
+.horizontal-tabs .horizontal-tabs-list {
   display: inline-block;
   margin: 0;
   border: 0;
@@ -22,7 +22,7 @@
   clear: both;
 }
 
-[dir="rtl"] .horizontal-tabs-list {
+[dir="rtl"] .horizontal-tabs .horizontal-tabs-list {
   border-right: 0;
   border-left: 1px solid #dedede;
 }
@@ -37,7 +37,7 @@
 }
 
 /* Layout of each tab */
-.horizontal-tab-button {
+.horizontal-tabs  .horizontal-tab-button {
   background: #eee;
   border-right: 1px solid #ccc; /* LTR */
   padding: 1px;
@@ -47,25 +47,25 @@
   float: left; /* LTR */
 }
 
-[dir="rtl"] .horizontal-tab-button {
+[dir="rtl"] .horizontal-tabs .horizontal-tab-button {
   border-right: 0;
   border-left: 1px solid #ccc;
   float: right;
 }
 
-.horizontal-tab-button a {
+.horizontal-tabs .horizontal-tab-button a {
   display: block;
   text-decoration: none;
   padding: 0.5em 0.6em;
 }
 
-.horizontal-tab-button a:hover {
+.horizontal-tabs .horizontal-tab-button a:hover {
   outline: none;
   background-color: #ededdd;
 }
 
-.horizontal-tab-button li:hover,
-.horizontal-tab-button li:focus {
+.horizontal-tabs .horizontal-tab-button li:hover,
+.horizontal-tabs .horizontal-tab-button li:focus {
   background-color: #ddd;
 }
 
