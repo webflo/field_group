@@ -321,13 +321,14 @@ function field_group_field_formatter_options($type) {
 
   if (!isset($options)) {
     $options = array();
-    $field_group_types = field_group_formatter_info();
-    if (!empty($field_group_types[$type])) {
-      foreach ($field_group_types[$type] as $name => $field_group_type) {
-        $options[$name] = $field_group_type['label'];
+    $formatters = field_group_formatter_info();
+    foreach ($formatters as $formatter) {
+      if (in_array($type, $formatter['supported_contexts'])) {
+        $options[$formatter['id']] = $formatter['label'];
       }
     }
   }
+  
   return $options;
 }
 

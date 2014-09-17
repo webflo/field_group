@@ -417,22 +417,14 @@ function field_group_field_group_format_settings($group) {
 
 /**
  * Function to retrieve all format possibilities for the fieldgroups.
- * @todo move to plugins.
  */
-function field_group_formatter_info($display_overview = FALSE) {
+function field_group_formatter_info() {
 
-  $formatters = array();
-  $formatters += module_invoke_all('field_group_formatter_info');
-
-  $hidden_region = array(
-    'label' => '<' . t('Hidden') . '>',
-    'description' => '',
-    'format_types' => array(),
-    'instance_settings' => array(),
-    'default_formatter' => '',
-  );
+  $manager = \Drupal::service('plugin.manager.field_group.formatters');
+  $formatters = $manager->getDefinitions();
 
   return $formatters;
+
 }
 
 /**
