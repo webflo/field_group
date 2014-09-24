@@ -15,16 +15,33 @@ use Drupal\field_group\FieldGroupFormatterBase;
  * @FieldGroupFormatter(
  *   id = "div",
  *   label = @Translation("Div"),
+ *   description = @Translation("This fieldgroup renders the inner content in a simple div with the title as legend."),
+ *   format_types = {
+ *     "open",
+ *     "collapsible",
+ *     "collapsed",
+ *   },
  *   supported_contexts = {
  *     "form",
- *     "view"
- *   }
+ *     "view",
+ *   },
+ *   default_format_type = "open",
  * )
  */
 class Div extends FieldGroupFormatterBase {
 
-  public function settingsForm() {
-    return $form;
+  /**
+   * {@inheritdoc}
+   */
+  public function defaultSettings() {
+    return array(
+      'description' => '',
+      'show_label' => 1,
+      'label_element' => 'h3',
+      'effect' => 'none',
+      'speed' => 'fast',
+      'required_fields' => 1,
+    ) + parent::defaultSettings();
   }
 
   public function render() {

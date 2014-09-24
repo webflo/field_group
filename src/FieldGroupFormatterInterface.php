@@ -7,12 +7,14 @@
 
 namespace Drupal\field_group;
 
+use Drupal\Component\Plugin\PluginInspectionInterface;
+
 /**
  * Interface definition for fieldgroup formatter plugins.
  *
  * @ingroup field_group_formatter
  */
-interface FieldGroupFormatterInterface extends PluginSettingsInterface {
+interface FieldGroupFormatterInterface extends PluginInspectionInterface {
 
   /**
    * Returns a form to configure settings for the formatter.
@@ -41,5 +43,13 @@ interface FieldGroupFormatterInterface extends PluginSettingsInterface {
    *   A short summary of the formatter settings.
    */
   public function settingsSummary();
+
+  /**
+   * Defines the default settings for this plugin.
+   *
+   * @return array
+   *   A list of default settings, keyed by the setting name.
+   */
+  public static function defaultSettings();
 
 }

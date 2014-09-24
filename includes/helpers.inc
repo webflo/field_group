@@ -83,7 +83,7 @@ function _field_group_get_html_classes(&$group) {
 function _field_group_get_default_formatter_settings($format_type, $context) {
 
   $field_group_types = field_group_formatter_info();
-  $formatter = $field_group_types[$context][$format_type];
+  $formatter = $field_group_types[$format_type];
 
   return array(
     'formatter' => isset($formatter['default_formatter']) ? $formatter['default_formatter'] : '',

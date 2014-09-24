@@ -79,137 +79,6 @@ function field_group_element_info() {
   return $types;
 }
 
-/**
- * Implements hook_field_group_formatter_info().
- */
-function field_group_field_group_formatter_info() {
-
-  return array(
-    'form' => array(
-      'html-element' => array(
-        'label' => t('HTML element'),
-        'description' => t('This fieldgroup renders the inner content in a HTML element with classes and attributes.'),
-        'instance_settings' => array('element' => 'div', 'show_label' => 0, 'label_element' => 'div', 'classes' => '', 'attributes' => '', 'required_fields' => 1),
-      ),
-      'div' => array(
-        'label' => t('Div'),
-        'description' => t('This fieldgroup renders the inner content in a simple div with the title as legend.'),
-        'format_types' => array('open', 'collapsible', 'collapsed'),
-        'instance_settings' => array('description' => '', 'show_label' => 1, 'label_element' => 'h3', 'effect' => 'none', 'speed' => 'fast', 'classes' => '', 'required_fields' => 1, 'id' => ''),
-        'default_formatter' => 'open',
-      ),
-      'fieldset' => array(
-        'label' => t('Fieldset'),
-        'description' => t('This fieldgroup renders the inner content in a fieldset with the title as legend.'),
-        'instance_settings' => array('description' => '', 'classes' => '', 'required_fields' => 1),
-      ),
-      'tabs' => array(
-        'label' => t('Vertical tabs group'),
-        'description' => t('This fieldgroup renders child groups in its own vertical tabs wrapper.'),
-        'instance_settings' => array('classes' => ''),
-      ),
-      'tab' => array(
-        'label' => t('Vertical tab'),
-        'description' => t('This fieldgroup renders the content in a fieldset, part of vertical tabs group.'),
-        'format_types' => array('open', 'closed'),
-        'instance_settings' => array('description' => '', 'classes' => '', 'required_fields' => 1),
-        'default_formatter' => 'closed',
-      ),
-      'htabs' => array(
-        'label' => t('Horizontal tabs group'),
-        'description' => t('This fieldgroup renders child groups in its own horizontal tabs wrapper.'),
-        'instance_settings' => array('classes' => ''),
-      ),
-      'htab' => array(
-        'label' => t('Horizontal tab'),
-        'format_types' => array('open', 'closed'),
-        'description' => t('This fieldgroup renders the content in a fieldset, part of horizontal tabs group.'),
-        'default_formatter' => 'closed',
-        'instance_settings' => array('description' => '', 'classes' => '', 'required_fields' => 1, 'id' => ''),
-      ),
-      'multipage-group' => array(
-        'label' => t('Multipage group'),
-        'description' => t('This fieldgroup renders groups on separate pages.'),
-        'instance_settings' => array('classes' => '', 'page_header' => 3, 'move_additional' => 1, 'page_counter' => 1, 'move_button' => 0),
-      ),
-      'multipage' => array(
-        'label' => t('Multipage'),
-        'format_types' => array('start', 'no-start'),
-        'description' => t('This fieldgroup renders the content in a page.'),
-        'default_formatter' => 'no-start',
-        'instance_settings' => array('description' => '', 'classes' => '', 'required_fields' => 1),
-      ),
-      'accordion' => array(
-        'label' => t('Accordion group'),
-        'description' => t('This fieldgroup renders child groups as jQuery accordion.'),
-        'instance_settings' => array('effect' => 'none', 'classes' => ''),
-      ),
-      'accordion-item' => array(
-        'label' => t('Accordion item'),
-        'format_types' => array('open', 'closed'),
-        'description' => t('This fieldgroup renders the content in a div, part of accordion group.'),
-        'default_formatter' => 'closed',
-        'instance_settings' => array('description' => '', 'classes' => '', 'required_fields' => 1),
-      ),
-    ),
-    'view' => array(
-      'html-element' => array(
-        'label' => t('HTML element'),
-        'description' => t('This fieldgroup renders the inner content in a HTML element with classes and attributes.'),
-        'instance_settings' => array('element' => 'div', 'show_label' => 0, 'label_element' => 'div', 'classes' => '', 'attributes' => '', 'required_fields' => 1),
-      ),
-      'div' => array(
-        'label' => t('Div'),
-        'description' => t('This fieldgroup renders the inner content in a simple div with the title as legend.'),
-        'format_types' => array('open', 'collapsible', 'collapsed'),
-        'instance_settings' => array('description' => '', 'show_label' => 1, 'label_element' => 'h3', 'effect' => 'none', 'speed' => 'fast', 'classes' => '', 'id' => ''),
-        'default_formatter' => 'collapsible',
-      ),
-      'fieldset' => array(
-        'label' => t('Fieldset'),
-        'description' => t('This fieldgroup renders the inner content in a fieldset with the title as legend.'),
-        'instance_settings' => array('description' => '', 'classes' => ''),
-      ),
-      'tabs' => array(
-        'label' => t('Vertical tabs group'),
-        'description' => t('This fieldgroup renders child groups in its own vertical tabs wrapper.'),
-        'instance_settings' => array('classes' => ''),
-      ),
-      'tab' => array(
-        'label' => t('Vertical tab'),
-        'description' => t('This fieldgroup renders the content in a fieldset, part of vertical tabs group.'),
-        'format_types' => array('open', 'closed'),
-        'instance_settings' => array('description' => '', 'classes' => ''),
-        'default_formatter' => 'closed',
-      ),
-      'htabs' => array(
-        'label' => t('Horizontal tabs group'),
-        'description' => t('This fieldgroup renders child groups in its own horizontal tabs wrapper.'),
-        'instance_settings' => array('classes' => ''),
-      ),
-      'htab' => array(
-        'label' => t('Horizontal tab item'),
-        'format_types' => array('open', 'closed'),
-        'description' => t('This fieldgroup renders the content in a fieldset, part of horizontal tabs group.'),
-        'instance_settings' => array('description' => '', 'classes' => '', 'id' => ''),
-        'default_formatter' => 'closed',
-      ),
-      'accordion' => array(
-        'label' => t('Accordion group'),
-        'description' => t('This fieldgroup renders child groups as jQuery accordion.'),
-        'instance_settings' => array('description' => '', 'classes' => '', 'effect' => 'bounceslide'),
-      ),
-      'accordion-item' => array(
-        'label' => t('Accordion item'),
-        'format_types' => array('open', 'closed'),
-        'description' => t('This fieldgroup renders the content in a div, part of accordion group.'),
-        'instance_settings' => array('classes' => ''),
-        'default_formatter' => 'closed',
-      ),
-    ),
-  );
-}
-
 
 /**
  * Implements hook_form_FORM_ID_alter().
@@ -245,7 +114,7 @@ function field_group_field_group_format_settings($group) {
   );
 
   $field_group_types = field_group_formatter_info();
-  $formatter = $field_group_types[$group->context][$group->format_type];
+  $formatter = $field_group_types[$group->format_type];
 
   // Add the required formatter type selector.
   if (isset($formatter['format_types'])) {

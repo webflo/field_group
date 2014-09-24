@@ -66,4 +66,14 @@ abstract class FieldGroupFormatterBase extends PluginBase implements FieldGroupF
     return array();
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function defaultSettings() {
+    return array(
+      'classes' => '',
+      'id' => '',
+    );
+  }
+
 }
