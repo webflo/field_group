@@ -27,7 +27,7 @@ class Accordion extends FieldGroupFormatterBase {
   /**
    * {@inheritdoc}
    */
-  public function defaultSettings() {
+  public static function defaultSettings() {
     return array(
       'effect' => 'none',
     ) + parent::defaultSettings();

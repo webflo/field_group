@@ -27,7 +27,7 @@ class HtmlElement extends FieldGroupFormatterBase {
   /**
    * {@inheritdoc}
    */
-  public function defaultSettings() {
+  public static function defaultSettings() {
     return array(
       'element' => 'div',
       'show_label' => 0,

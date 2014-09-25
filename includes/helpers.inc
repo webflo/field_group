@@ -85,9 +85,11 @@ function _field_group_get_default_formatter_settings($format_type, $context) {
   $field_group_types = field_group_formatter_info();
   $formatter = $field_group_types[$format_type];
 
+  $manager = \Drupal::service('plugin.manager.field_group.formatters');
+
   return array(
-    'formatter' => isset($formatter['default_formatter']) ? $formatter['default_formatter'] : '',
-    'instance_settings' => $formatter['instance_settings']
+    'formatter' => isset($formatter['default_format_type']) ? $formatter['default_format_type'] : '',
+    'instance_settings' => $manager->getDefaultSettings($format_type),
   );
 }
 

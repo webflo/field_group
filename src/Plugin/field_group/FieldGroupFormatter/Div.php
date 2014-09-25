@@ -33,7 +33,7 @@ class Div extends FieldGroupFormatterBase {
   /**
    * {@inheritdoc}
    */
-  public function defaultSettings() {
+  public static function defaultSettings() {
     return array(
       'description' => '',
       'show_label' => 1,

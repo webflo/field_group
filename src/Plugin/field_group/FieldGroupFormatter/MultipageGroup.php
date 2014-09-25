@@ -26,7 +26,7 @@ class MultipageGroup extends FieldGroupFormatterBase {
   /**
    * {@inheritdoc}
    */
-  public function defaultSettings() {
+  public static function defaultSettings() {
     return array(
       'page_header' => 3,
       'move_additional' => 1,

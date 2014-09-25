@@ -79,7 +79,6 @@ function field_group_element_info() {
   return $types;
 }
 
-
 /**
  * Implements hook_form_FORM_ID_alter().
  * Using hook_form_field_ui_form_display_overview_form_alter.

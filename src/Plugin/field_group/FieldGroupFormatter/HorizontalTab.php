@@ -32,7 +32,7 @@ class HorizontalTab extends FieldGroupFormatterBase {
   /**
    * {@inheritdoc}
    */
-  public function defaultSettings() {
+  public static function defaultSettings() {
     return array(
       'description' => '',
       'required_fields' => 1,

@@ -31,7 +31,7 @@ class Multipage extends FieldGroupFormatterBase {
   /**
    * {@inheritdoc}
    */
-  public function defaultSettings() {
+  public static function defaultSettings() {
     return array(
       'required_fields' => 1,
     ) + parent::defaultSettings();
