@@ -75,13 +75,6 @@ class FieldGroupFormatter extends Plugin {
   public $format_types = array();
 
   /**
-   * The default format type for the formatter.
-   *
-   * @var string
-   */
-  public $default_format_type = '';
-
-  /**
    * An integer to determine the weight of this formatter relative to other
    * formatter in the Field UI when selecting a formatter for a given group.
    *

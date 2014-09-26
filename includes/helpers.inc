@@ -38,37 +38,33 @@ function _field_group_get_html_classes(&$group) {
     }
   }
 
-  if (isset($group->format_settings['instance_settings'])) {
+  // Add a required-fields class to trigger the js.
+  if (!empty($group->format_settings['required_fields'])) {
+    $required[] = 'required-fields';
+  }
 
-    // Add a required-fields class to trigger the js.
-    if (!empty($group->format_settings['instance_settings']['required_fields'])) {
-      $required[] = 'required-fields';
-    }
+  // Add user selected classes.
+  if (!empty($group->format_settings['classes'])) {
+    $required[] = check_plain($group->format_settings['classes']);
+  }
 
-    // Add user selected classes.
-    if (!empty($group->format_settings['instance_settings']['classes'])) {
-      $required[] = check_plain($group->format_settings['instance_settings']['classes']);
-    }
+  // Extra required classes for div.
+  if ($group->format_type == 'div') {
+    if ($group->format_settings['formatter'] != 'open') {
 
-    // Extra required classes for div.
-    if ($group->format_type == 'div') {
-      if ($group->format_settings['formatter'] != 'open') {
+      $speed = isset($group->format_settings['speed']) ? $group->format_settings['speed'] : 'none';
+      $required[] = 'speed-' . $speed;
 
-        $speed = isset($group->format_settings['instance_settings']['speed']) ? $group->format_settings['instance_settings']['speed'] : 'none';
-        $required[] = 'speed-' . $speed;
-
-        $effect = isset($group->format_settings['instance_settings']['effect']) ? $group->format_settings['instance_settings']['effect'] : 'none';
-        $required[] = 'effect-' . $effect;
-      }
-    }
-
-    // Extra required classes for accordions.
-    elseif ($group->format_type == 'accordion') {
-      $required[] = 'field-group-' . $group->format_type . '-wrapper';
-      $effect = isset($group->format_settings['instance_settings']['effect']) ? $group->format_settings['instance_settings']['effect'] : 'none';
+      $effect = isset($group->format_settings['effect']) ? $group->format_settings['effect'] : 'none';
       $required[] = 'effect-' . $effect;
     }
+  }
 
+  // Extra required classes for accordions.
+  elseif ($group->format_type == 'accordion') {
+    $required[] = 'field-group-' . $group->format_type . '-wrapper';
+    $effect = isset($group->format_settings['effect']) ? $group->format_settings['effect'] : 'none';
+    $required[] = 'effect-' . $effect;
   }
 
   $classes->required = $required;
@@ -80,17 +76,9 @@ function _field_group_get_html_classes(&$group) {
 /**
  * Get the default formatter settings for a given formatter and a mode.
  */
-function _field_group_get_default_formatter_settings($format_type, $context) {
-
-  $field_group_types = field_group_formatter_info();
-  $formatter = $field_group_types[$format_type];
-
+function _field_group_get_default_formatter_settings($format_type) {
   $manager = \Drupal::service('plugin.manager.field_group.formatters');
-
-  return array(
-    'formatter' => isset($formatter['default_format_type']) ? $formatter['default_format_type'] : '',
-    'instance_settings' => $manager->getDefaultSettings($format_type),
-  );
+  return $manager->getDefaultSettings($format_type);
 }
 
 /**

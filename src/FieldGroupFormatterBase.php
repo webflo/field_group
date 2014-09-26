@@ -7,15 +7,14 @@
 
 namespace Drupal\field_group;
 
-use Drupal\Component\Plugin\PluginBase;
-use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\Core\Field\PluginSettingsBase;
 
 /**
  * Base class for 'Fieldgroup formatter' plugin implementations.
  *
  * @ingroup field_group_formatter
  */
-abstract class FieldGroupFormatterBase extends PluginBase implements FieldGroupFormatterInterface {
+abstract class FieldGroupFormatterBase extends PluginSettingsBase implements FieldGroupFormatterInterface {
 
   /**
    * The formatter settings.
@@ -46,7 +45,31 @@ abstract class FieldGroupFormatterBase extends PluginBase implements FieldGroupF
   protected $context;
 
   /**
-   * Get the label for current formatter.
+   * Constructs a FieldGroupFormatterBase object.
+   *
+   * @param string $plugin_id
+   *   The plugin_id for the formatter.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
+   * @param array $settings
+   *   The formatter settings.
+   * @param string $label
+   *   The formatter label.
+   * @param string $context
+   *   The display context.
+   */
+  public function __construct($plugin_id, $plugin_definition, array $settings, $label, $context) {
+
+    parent::__construct(array(), $plugin_id, $plugin_definition);
+
+    $this->settings = $settings;
+    $this->label = $label;
+    $this->context = $context;
+  }
+
+  /**
+   * Get the current label.
+   * @return string
    */
   public function getLabel() {
     return $this->label;
@@ -55,15 +78,58 @@ abstract class FieldGroupFormatterBase extends PluginBase implements FieldGroupF
   /**
    * {@inheritdoc}
    */
-  public function settingsForm(array $form, array &$form_state) {
-    return array();
+  public function settingsForm() {
+
+    $form = array();
+    $form['label'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Field group label'),
+      '#default_value' => $this->label,
+      '#weight' => -5,
+    );
+
+    $form['id'] = array(
+      '#title' => t('ID'),
+      '#type' => 'textfield',
+      '#default_value' => $this->getSetting('id'),
+      '#weight' => 10,
+      '#element_validate' => array('field_group_validate_id'),
+    );
+
+    $form['classes'] = array(
+      '#title' => t('Extra CSS classes'),
+      '#type' => 'textfield',
+      '#default_value' => $this->getSetting('classes'),
+      '#weight' => 11,
+      '#element_validate' => array('field_group_validate_css_class'),
+    );
+
+    $form['#validate'] = array('field_group_format_settings_form_validate');
+
+    return $form;
+
   }
 
   /**
    * {@inheritdoc}
    */
   public function settingsSummary() {
-    return array();
+
+    $summary = array();
+
+    if ($this->getSetting('formatter')) {
+      $summary[] = $this->pluginDefinition['label'] . ': ' . $this->getSetting('formatter');
+    }
+
+    if ($this->getSetting('id')) {
+      $summary[] = \Drupal::translation()->translate('Id: @id', array('@id' => $this->getSetting('id')));
+    }
+
+    if ($this->getSetting('classes')) {
+      $summary[] = \Drupal::translation()->translate('Extra CSS classes: @classes', array('@classes' => $this->getSetting('classes')));
+    }
+
+    return $summary;
   }
 
   /**

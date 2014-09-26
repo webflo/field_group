@@ -120,7 +120,7 @@ function field_group_field_ui_display_form_alter(&$form, &$form_state, $context)
     // After all updates are finished, let the form_state know.
     $form_state['field_group'][$name] = $group;
 
-    $settings = field_group_format_settings_form($group);
+    $settings = field_group_format_settings_form($group, $form, $form_state);
 
     $id = strtr($name, '_', '-');
     $js_rows_data[$id] = array('type' => 'group', 'name' => $name);
@@ -321,14 +321,17 @@ function field_group_field_formatter_options($type) {
 
   if (!isset($options)) {
     $options = array();
-    $formatters = field_group_formatter_info();
+
+    $manager = \Drupal::service('plugin.manager.field_group.formatters');
+    $formatters = $manager->getDefinitions();
+
     foreach ($formatters as $formatter) {
       if (in_array($type, $formatter['supported_contexts'])) {
         $options[$formatter['id']] = $formatter['label'];
       }
     }
   }
-  
+
   return $options;
 }
 
@@ -552,9 +555,6 @@ function field_group_field_overview_submit($form, &$form_state) {
   if (!empty($form_values['_add_new_group']['group_name'])) {
     $values = $form_values['_add_new_group'];
 
-    $field_group_types = field_group_formatter_info();
-    $formatter = $field_group_types[($mode == 'form' ? 'form' : 'view')][$values['format']['type']];
-
     $new_group = (object) array(
       'group_name' => $values['group_name'],
       'entity_type' => $entity_type,
@@ -567,13 +567,10 @@ function field_group_field_overview_submit($form, &$form_state) {
       'label' => $values['label'],
       'format_type' => $values['format']['type'],
     );
-    $new_group->format_settings = array('formatter' => isset($formatter['default_formatter']) ? $formatter['default_formatter'] : '');
-    if (isset($formatter['instance_settings'])) {
-      $new_group->format_settings['instance_settings'] = $formatter['instance_settings'];
-    }
+    $new_group->format_settings = _field_group_get_default_formatter_settings($values['format']['type'], $context);
 
     $classes = _field_group_get_html_classes($new_group);
-    $new_group->format_settings['instance_settings']['classes'] = implode(' ', $classes->optional);
+    $new_group->format_settings['classes'] = implode(' ', $classes->optional);
 
     field_group_group_save($new_group);
 
@@ -611,7 +608,7 @@ function field_group_field_overview_submit($form, &$form_state) {
     if ($group->format_type != $old_format_type) {
       $default_formatter_settings = _field_group_get_default_formatter_settings($group->format_type, $context);
       $group->format_settings += $default_formatter_settings;
-      $group->format_settings['instance_settings'] += $default_formatter_settings['instance_settings'];
+      $group->format_settings['settings'] += $default_formatter_settings['settings'];
     }
 
     field_group_group_save($group);
@@ -624,35 +621,16 @@ function field_group_field_overview_submit($form, &$form_state) {
  * Creates a form for field_group formatters.
  * @param Object $group The FieldGroup object.
  */
-function field_group_format_settings_form(&$group) {
-  $form = array();
-  $form['label'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Field group label'),
-    '#default_value' => $group->label,
-    '#weight' => -5,
-    '#element_validate' => array('field_group_format_settings_label_validate'),
-  );
-  $addition = module_invoke_all('field_group_format_settings', $group);
-  $form += $addition;
-  // Give fieldgroup implementations the chance to alter the description.
-  if (!empty($addition['label']['#description'])) {
-    $form['label']['#description'] = $addition['label']['#description'];
-  }
-  $form['#validate'] = array('field_group_format_settings_form_validate');
-  return $form;
-}
+function field_group_format_settings_form(&$group, $form, $form_state) {
 
-/**
- * Validate the label. Label is required for fieldsets that are collapsible.
- */
-function field_group_format_settings_label_validate($element, &$form_state) {
+  $manager = \Drupal::service('plugin.manager.field_group.formatters');
+  $plugin = $manager->getInstance(array(
+    'format_type' => $group->format_type,
+    'configuration' => array('label' => $group->label, 'settings' => $group->format_settings),
+    'context' => $group->context,
+  ));
 
-  $group = $form_state['values']['fields'][$element['#parents'][1]];
-  $settings = $group['settings_edit_form']['settings'];
-  if ($group['format']['type'] == 'fieldset' && ($settings['formatter'] == 'collapsed' || $settings['formatter'] == 'collapsible') && empty($settings['label'])) {
-    \Drupal::formBuilder()->setError($element, $form_state, t('The label is required when formatter is collapsible or collapsed'));
-  }
+  return $plugin->settingsForm($form, $form_state);
 
 }
 
@@ -662,7 +640,7 @@ function field_group_format_settings_label_validate($element, &$form_state) {
  * @param Array $form_state The state of the form.
  */
 function field_group_validate_css_class($element, &$form_state) {
-  if (!empty($form_state['values']['fields'][$form_state['plugin_settings_edit']]['settings_edit_form']['settings']['instance_settings']['classes']) && !preg_match('!^[A-Za-z0-9-_ ]+$!', $form_state['values']['fields'][$form_state['plugin_settings_edit']]['settings_edit_form']['settings']['instance_settings']['classes'])) {
+  if (!empty($form_state['values']['fields'][$form_state['plugin_settings_edit']]['settings_edit_form']['settings']['classes']) && !preg_match('!^[A-Za-z0-9-_ ]+$!', $form_state['values']['fields'][$form_state['plugin_settings_edit']]['settings_edit_form']['settings']['classes'])) {
     \Drupal::formBuilder()->setError($element, $form_state, t('The css class must include only letters, numbers, underscores and dashes.'));
   }
 }
@@ -673,7 +651,7 @@ function field_group_validate_css_class($element, &$form_state) {
  * @param Array $form_state The state of the form.
  */
 function field_group_validate_id($element, &$form_state) {
-  if (!empty($form_state['values']['fields'][$form_state['plugin_settings_edit']]['settings_edit_form']['settings']['instance_settings']['id']) && !preg_match('!^[A-Za-z0-9-_]+$!', $form_state['values']['fields'][$form_state['plugin_settings_edit']]['settings_edit_form']['settings']['instance_settings']['id'])) {
+  if (!empty($form_state['values']['fields'][$form_state['plugin_settings_edit']]['settings_edit_form']['settings']['id']) && !preg_match('!^[A-Za-z0-9-_]+$!', $form_state['values']['fields'][$form_state['plugin_settings_edit']]['settings_edit_form']['settings']['id'])) {
     \Drupal::formBuilder()->setError($element, $form_state, t('The id must include only letters, numbers, underscores and dashes.'));
   }
 }
@@ -717,9 +695,18 @@ function field_group_formatter_settings_update(& $group, $settings) {
  * @return Array ready to be rendered.
  */
 function field_group_format_settings_summary($group_name, $group) {
-  $summary = implode('<br />', module_invoke_all('field_group_format_summary', $group));
+
+  $manager = \Drupal::service('plugin.manager.field_group.formatters');
+  $plugin = $manager->getInstance(array(
+    'format_type' => $group->format_type,
+    'configuration' => array('label' => $group->label, 'settings' => $group->format_settings),
+    'context' => $group->context,
+  ));
+
+  $summary = $plugin->settingsSummary();
+
   return array(
-    '#markup' => '<div class="field-plugin-summary">' . $summary . '</div>',
+    '#markup' => '<div class="field-plugin-summary">' . implode('<br />', $summary) . '</div>',
     '#cell_attributes' => array('class' => array('field-plugin-summary-cell')),
   );
 }

@@ -27,6 +27,37 @@ class Accordion extends FieldGroupFormatterBase {
   /**
    * {@inheritdoc}
    */
+  public function settingsForm() {
+
+    $form = parent::settingsForm();
+
+    $form['effect'] = array(
+      '#title' => t('Effect'),
+      '#type' => 'select',
+      '#options' => array('none' => t('None'), 'bounceslide' => t('Bounce slide')),
+      '#default_value' => $this->getSetting('effect'),
+      '#weight' => 2,
+    );
+
+    return $form;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function settingsSummary() {
+
+    $summary = array();
+    $summary[] = \Drupal::translation()->translate('Effect : @effect',
+      array('@effect' => $this->getSetting('effect'))
+    );
+
+    return $summary;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public static function defaultSettings() {
     return array(
       'effect' => 'none',

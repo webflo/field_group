@@ -23,15 +23,10 @@ interface FieldGroupFormatterInterface extends PluginInspectionInterface {
    * administrators to configure the formatter. The field_group module takes care
    * of handling submitted form values.
    *
-   * @param array $form
-   *   The form where the settings form is being included in.
-   * @param array $form_state
-   *   An associative array containing the current state of the form.
-   *
    * @return array
    *   The form elements for the formatter settings.
    */
-  public function settingsForm(array $form, array &$form_state);
+  public function settingsForm();
 
   /**
    * Returns a short summary for the current formatter settings.

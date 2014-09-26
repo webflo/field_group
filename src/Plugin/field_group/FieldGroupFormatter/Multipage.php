@@ -23,7 +23,6 @@ use Drupal\field_group\FieldGroupFormatterBase;
  *   supported_contexts = {
  *     "form",
  *   },
- *   default_format_type = "no-start",
  * )
  */
 class Multipage extends FieldGroupFormatterBase {
@@ -31,9 +30,42 @@ class Multipage extends FieldGroupFormatterBase {
   /**
    * {@inheritdoc}
    */
+  public function settingsForm() {
+
+    $form = parent::settingsForm();
+
+    $form['formatter'] = array(
+      '#title' => t('Default state'),
+      '#type' => 'select',
+      '#options' => array_combine($this->pluginDefinition['format_types'], $this->pluginDefinition['format_types']),
+      '#default_value' => $this->getSetting('formatter'),
+      '#weight' => -4,
+    );
+
+    return $form;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function settingsSummary() {
+
+    $summary = parent::settingsSummary();
+
+    if ($this->getSetting('required_fields')) {
+      $summary[] = \Drupal::translation()->translate('Mark as required');
+    }
+
+    return $summary;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public static function defaultSettings() {
     return array(
       'required_fields' => 1,
+      'formatter' => 'no-start',
     ) + parent::defaultSettings();
   }
 

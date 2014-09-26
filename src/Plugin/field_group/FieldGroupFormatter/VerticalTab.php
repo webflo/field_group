@@ -24,7 +24,6 @@ use Drupal\field_group\FieldGroupFormatterBase;
  *     "form",
  *     "view",
  *   },
- *   default_format_type = "closed",
  * )
  */
 class VerticalTab extends FieldGroupFormatterBase {
@@ -32,8 +31,36 @@ class VerticalTab extends FieldGroupFormatterBase {
   /**
    * {@inheritdoc}
    */
+  public function settingsForm() {
+
+    $form = parent::settingsForm();
+
+    $form['formatter'] = array(
+      '#title' => t('Default state'),
+      '#type' => 'select',
+      '#options' => array_combine($this->pluginDefinition['format_types'], $this->pluginDefinition['format_types']),
+      '#default_value' => $this->getSetting('formatter'),
+      '#weight' => -4,
+    );
+
+    if ($this->context == 'form') {
+      $form['required_fields'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Mark group as required if it contains required fields.'),
+        '#default_value' => $this->getSetting('required_fields'),
+        '#weight' => 2,
+      );
+    }
+
+    return $form;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public static function defaultSettings() {
     return array(
+      'formatter' => 'closed',
       'description' => '',
       'required_fields' => 1,
     ) + parent::defaultSettings();

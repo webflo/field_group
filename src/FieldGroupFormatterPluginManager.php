@@ -36,6 +36,91 @@ class FieldGroupFormatterPluginManager extends DefaultPluginManager {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function createInstance($plugin_id, array $configuration = array()) {
+    $plugin_definition = $this->getDefinition($plugin_id);
+    $plugin_class = DefaultFactory::getPluginClass($plugin_id, $plugin_definition);
+
+    // If the plugin provides a factory method, pass the container to it.
+    if (is_subclass_of($plugin_class, 'Drupal\Core\Plugin\ContainerFactoryPluginInterface')) {
+      return $plugin_class::create(\Drupal::getContainer(), $configuration, $plugin_id, $plugin_definition);
+    }
+
+    return new $plugin_class($plugin_id, $plugin_definition, $configuration['settings'], $configuration['label'], $configuration['context']);
+  }
+
+  /**
+   * Overrides PluginManagerBase::getInstance().
+   *
+   * @param array $options
+   *   An array with the following key/value pairs:
+   *   - format_type: The current format type.
+   *   - context: (string) The current display context.
+   *   - prepare: (bool, optional) Whether default values should get merged in
+   *     the 'configuration' array. Defaults to TRUE.
+   *   - configuration: (array) the configuration for the formatter. The
+   *     following key value pairs are allowed, and are all optional if
+   *     'prepare' is TRUE:
+   *     - label: (string) Position of the label. The default 'field' theme
+   *       implementation supports the values 'inline', 'above' and 'hidden'.
+   *       Defaults to 'above'.
+   *     - settings: (array) Settings specific to the formatter. Each setting
+   *       defaults to the default value specified in the formatter definition.
+   *
+   * @return \Drupal\field_group\FieldGroupFormatterInterface|null
+   *   A formatter object or NULL when plugin is not found.
+   */
+  public function getInstance(array $options) {
+    $configuration = $options['configuration'];
+    $format_type = $options['format_type'];
+    $context = $options['context'];
+
+    // Fill in default configuration if needed.
+    if (!isset($options['prepare']) || $options['prepare'] == TRUE) {
+      $configuration = $this->prepareConfiguration($format_type, $configuration);
+    }
+
+    $plugin_id = $format_type;
+
+    // Validate if plugin exists and it's allowed for current context.
+    $definition = $this->getDefinition($format_type, FALSE);
+    if (!isset($definition['class']) || !in_array($context, $definition['supported_contexts'])) {
+      return NULL;
+    }
+
+    $configuration += array(
+      'context' => $context,
+    );
+
+    return $this->createInstance($plugin_id, $configuration);
+  }
+
+  /**
+   * Merges default values for formatter configuration.
+   *
+   * @param string $format_type
+   *   The format type
+   * @param array $properties
+   *   An array of formatter configuration.
+   *
+   * @return array
+   *   The display properties with defaults added.
+   */
+  public function prepareConfiguration($format_type, array $configuration) {
+    // Fill in defaults for missing properties.
+    $configuration += array(
+      'label' => '',
+      'settings' => array(),
+    );
+
+    // Fill in default settings values for the formatter.
+    $configuration['settings'] += $this->getDefaultSettings($format_type);
+
+    return $configuration;
+  }
+
+  /**
    * Returns the default settings of a field_group formatter.
    *
    * @param string $type

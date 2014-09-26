@@ -24,6 +24,73 @@ use Drupal\field_group\FieldGroupFormatterBase;
  */
 class HtmlElement extends FieldGroupFormatterBase {
 
+  public function settingsForm() {
+
+    $form = parent::settingsForm();
+
+    $form['element'] = array(
+      '#title' => t('Element'),
+      '#type' => 'textfield',
+      '#default_value' => $this->getSetting('element'),
+      '#description' => t('E.g. div, section, aside etc.'),
+      '#weight' => 1,
+    );
+
+    $form['show_label'] = array(
+      '#title' => t('Show label'),
+      '#type' => 'select',
+      '#options' => array(0 => t('No'), 1 => t('Yes')),
+      '#default_value' => $this->getSetting('show_label'),
+      '#weight' => 2,
+    );
+
+    $form['label_element'] = array(
+      '#title' => t('Label element'),
+      '#type' => 'textfield',
+      '#default_value' => $this->getSetting('label_element'),
+      '#weight' => 3,
+    );
+
+    $form['attributes'] = array(
+      '#title' => t('Attributes'),
+      '#type' => 'textfield',
+      '#default_value' => $this->getSetting('attributes'),
+      '#description' => t('E.g. name="anchor"'),
+      '#weight' => 4,
+    );
+
+    return $form;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function settingsSummary() {
+
+    $summary = parent::settingsSummary();
+    $summary[] = \Drupal::translation()->translate('Element: @element',
+      array('@element' => $this->getSetting('element'))
+    );
+
+    if ($this->getSetting('show_label')) {
+      $summary[] = \Drupal::translation()->translate('Label element: @element',
+        array('@element' => $this->getSetting('label_element'))
+      );
+    }
+
+    if ($this->getSetting('attributes')) {
+      $summary[] = \Drupal::translation()->translate('Attributes: @attributes',
+        array('@attributes' => $this->getSetting('attributes'))
+      );
+    }
+
+    if ($this->getSetting('required_fields')) {
+      $summary[] = \Drupal::translation()->translate('Mark as required');
+    }
+
+    return $summary;
+  }
+
   /**
    * {@inheritdoc}
    */
