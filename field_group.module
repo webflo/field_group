@@ -716,8 +716,13 @@ function field_group_remove_empty_display_groups(& $element, $groups) {
       }
     }
     // Child is a field, the element is not empty and access is set to true (or empty).
-    elseif (!empty($element[$name]) && (!isset($element[$name]['#access']) || $element[$name]['#access'])) {
-      $empty_group = FALSE;
+    elseif (!empty($element[$name])) {
+      $has_access = !isset($element[$name]['#access']) || $element[$name]['#access'];
+      $has_markup = isset($element[$name]['#markup']);
+      $has_items = isset($element[$name][0]);
+      if ($has_access && ($has_markup || $has_items)) {
+        $empty_group = FALSE;
+      }
     }
 
   }
