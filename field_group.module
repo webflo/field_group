@@ -6,6 +6,7 @@
  */
 
 use Drupal\Component\Utility\Xss;
+use Drupal\Component\Utility\String;
 use Drupal\Core\Render\Element;
 
 
@@ -293,7 +294,7 @@ function form_process_horizontal_tabs($element, &$form_state, $on_form = TRUE) {
 function theme_horizontal_tabs($variables) {
   $element = $variables['element'];
 
-  $output = '<h2 class="element-invisible">' . (!empty($element['#title']) ? $element['#title'] : t('Horizontal Tabs')) . '</h2>';
+  $output = '<h2 class="visually-hidden">' . (!empty($element['#title']) ? $element['#title'] : t('Horizontal Tabs')) . '</h2>';
   $output .= '<div class="horizontal-tabs-panes">' . $element['#children'] . '</div>';
 
   return $output;
@@ -531,11 +532,11 @@ function field_group_group_save(& $group) {
 
   // Group is new.
   if ($config->isNew()) {
-    module_invoke_all('field_group_create_field_group', $group);
+    Drupal::moduleHandler()->invokeAll('field_group_create_field_group', array($group));
   }
   // Existing group.
   else {
-    module_invoke_all('field_group_update_field_group', $group);
+    Drupal::moduleHandler()->invokeAll('field_group_update_field_group', array($group));
   }
 
   return $config->setData((array)$group)->save();
@@ -746,7 +747,7 @@ function field_group_pre_render_tab(&$element, $group, &$rendering_object) {
   $add = array(
     '#type' => 'details',
     '#id' => 'edit-' . $group->group_name,
-    '#title' => check_plain(t($group->label)),
+    '#title' => String::checkPlain(t($group->label)),
     '#collapsible' => $group->collapsible,
     '#collapsed' => $group->collapsed,
     '#attributes' => array('class' => explode(" ", $group->classes)),
@@ -820,7 +821,7 @@ function field_group_pre_render_fieldset(&$element, $group, &$rendering_object) 
   $element += array(
     '#type' => 'fieldset',
     '#id' => drupal_html_id($group->group_name),
-    '#title' => check_plain(t($group->label)),
+    '#title' => String::checkPlain(t($group->label)),
     '#pre_render' => array(),
     '#attributes' => array('class' => explode(' ', $group->classes)),
     '#description' => $group->description,
@@ -870,7 +871,7 @@ function field_group_pre_render_html_element(&$element, $group, &$rendering_obje
 
   $element['#prefix'] = '<' . $html_element . $element_attributes . '>';
   if ($show_label) {
-    $element['#prefix'] .= '<' . $label_element . '><span>' . check_plain(t($group->label)) . '</span></' . $label_element . '>';
+    $element['#prefix'] .= '<' . $label_element . '><span>' . String::checkPlain(t($group->label)) . '</span></' . $label_element . '>';
   }
   $element['#suffix'] = '</' . $html_element . '>';
 }
@@ -898,7 +899,7 @@ function field_group_pre_render_div(&$element, $group, &$rendering_object) {
   if ($group->format_settings['formatter'] != 'open') {
 
     $element['#prefix'] = '<div' . $id . ' class="' . $group->classes . '">
-      <' . $label_element . '><span class="field-group-format-toggler">' . check_plain(t($group->label)) . '</span></' . $label_element . '>
+      <' . $label_element . '><span class="field-group-format-toggler">' . String::checkPlain(t($group->label)) . '</span></' . $label_element . '>
       <div class="field-group-format-wrapper" style="display: ' . (!empty($group->collapsed) ? 'none' : 'block') . ';">';
     $element['#suffix'] = '</div></div>';
 
@@ -914,7 +915,7 @@ function field_group_pre_render_div(&$element, $group, &$rendering_object) {
 
     $element['#prefix'] = '<div' . $id . $class_attribute . '>';
     if ($show_label) {
-      $element['#prefix'] .= '<' . $label_element . '><span>' . check_plain(t($group->label)) . '</span></' . $label_element . '>';
+      $element['#prefix'] .= '<' . $label_element . '><span>' . String::checkPlain(t($group->label)) . '</span></' . $label_element . '>';
     }
     $element['#suffix'] = '</div>';
   }
@@ -962,7 +963,7 @@ function field_group_pre_render_accordion_item(&$element, $group, &$rendering_ob
 
   $element += array(
     '#type' => 'markup',
-    '#prefix' => '<h3 class="field-group-format-toggler ' . $group->format_type . ($group->collapsed ? '' : ' field-group-accordion-active') . '"><a href="#">' . check_plain(t($group->label)) . '</a></h3>
+    '#prefix' => '<h3 class="field-group-format-toggler ' . $group->format_type . ($group->collapsed ? '' : ' field-group-accordion-active') . '"><a href="#">' . String::checkPlain(t($group->label)) . '</a></h3>
     <div class="field-group-format-wrapper ' . $group->classes . '">',
     '#suffix' => '</div>',
     //'#attributes' => array('class' => array($group->format_type)),
@@ -988,7 +989,7 @@ function field_group_pre_render_htabs(&$element, $group, &$rendering_object) {
 
   $element += array(
     '#type' => 'horizontal_tabs',
-    '#title' => check_plain(t($group->label)),
+    '#title' => String::checkPlain(t($group->label)),
     '#theme_wrappers' => array('horizontal_tabs'),
     '#prefix' => '<div class="field-group-' . $group->format_type . '-wrapper ' . $group->classes . '">',
     '#suffix' => '</div>',
@@ -1005,7 +1006,7 @@ function field_group_pre_render_htabs(&$element, $group, &$rendering_object) {
 
   // By default vertical_tabs don't have titles but you can override it in the theme.
   if (!empty($group->label)) {
-    $element['#title'] = check_plain($group->label);
+    $element['#title'] = String::checkPlain($group->label);
   }
 }
 
@@ -1028,7 +1029,7 @@ function field_group_pre_render_htab(&$element, $group, &$rendering_object) {
 
   $element += array(
     '#type' => 'fieldset',
-    '#title' => check_plain(t($group->label)),
+    '#title' => String::checkPlain(t($group->label)),
     '#collapsible' => $group->collapsible,
     '#collapsed' => $group->collapsed,
     '#attributes' => array('class' => explode(" ", $group->classes)),
@@ -1090,7 +1091,7 @@ function field_group_pre_render_multipage(&$element, $group, &$rendering_object)
   $group->classes .= $group->format_settings['formatter'] == 'start' ? ' multipage-open' : ' multipage-closed';
   $element += array(
     '#type' => 'multipage_pane',
-    '#title' => check_plain(t($group->label)),
+    '#title' => String::checkPlain(t($group->label)),
     '#collapsible' => $group->collapsible,
     '#collapsed' => $group->collapsed,
     '#attributes' => array('class' => explode(" ", $group->classes)),
@@ -1138,7 +1139,7 @@ function field_group_pre_render_tabs(&$element, $group, &$rendering_object) {
 
   // By default vertical_tabs don't have titles but you can override it in the theme.
   if (!empty($group->label)) {
-    $element['#title'] = check_plain($group->label);
+    $element['#title'] = String::checkPlain($group->label);
   }
 
 }

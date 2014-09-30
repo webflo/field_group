@@ -56,7 +56,7 @@ class FieldGroupDeleteForm extends ConfirmFormBase {
 
     field_group_group_delete($this->fieldGroup);
     \Drupal::cache()->invalidate('field_groups');
-    
+
     drupal_set_message(t('The group %group has been deleted from the %type content type.', array('%group' => t($this->fieldGroup->label), '%type' => $bundle_label)));
 
     // Redirect.
@@ -91,7 +91,7 @@ class FieldGroupDeleteForm extends ConfirmFormBase {
   /**
    * {@inheritdoc}
    */
-  public function getCancelRoute() {
+  public function getCancelUrl() {
 
     $entity_type_id = $this->fieldGroup->entity_type;
     $entity_type = \Drupal::entityManager()->getDefinition($entity_type_id);

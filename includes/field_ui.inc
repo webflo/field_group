@@ -8,6 +8,7 @@
 
 use Drupal\Core\Url;
 use Drupal\Core\Render\Element;
+use Drupal\Component\Utility\String;
 
 /**
  * Helper function to get the form parameters to use while
@@ -133,7 +134,7 @@ function field_group_field_ui_display_form_alter(&$form, &$form_state, $context)
       '#region_callback' => $params->region_callback,
       '#js_settings' => array('rowHandler' => 'group'),
       'human_name' => array(
-        '#markup' => check_plain(t($group->label)),
+        '#markup' => String::checkPlain(t($group->label)),
         '#prefix' => '<span class="group-label">',
         '#suffix' => '</span>',
       ),
@@ -193,7 +194,7 @@ function field_group_field_ui_display_form_alter(&$form, &$form_state, $context)
     );
 
     if ($form_state['plugin_settings_edit'] == $name) {
-      $table[$name]['format']['#cell_attributes'] = array('colspan' => 3);
+      $table[$name]['format']['#cell_attributes'] = array('colspan' => 2);
       $table[$name]['format']['format_settings'] = array(
         '#type' => 'container',
         '#attributes' => array('class' => array('field-plugin-settings-edit-form')),
@@ -223,7 +224,7 @@ function field_group_field_ui_display_form_alter(&$form, &$form_state, $context)
         ),
       );
       $table[$name]['#attributes']['class'][] = 'field-formatter-settings-editing';
-      $table[$name]['format']['type']['#attributes']['class'] = array('element-invisible');
+      $table[$name]['format']['type']['#attributes']['class'] = array('visually-hidden');
     }
     else {
       // After saving, the settings are updated here aswell. First we create
