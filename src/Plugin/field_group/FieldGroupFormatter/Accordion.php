@@ -27,6 +27,25 @@ class Accordion extends FieldGroupFormatterBase {
   /**
    * {@inheritdoc}
    */
+  public function preRender(&$element) {
+    // Add the jQuery UI accordion.
+    $element['#attached']['library'][] = 'field_group/formatter.accordion';
+
+    $element += array(
+      '#type' => 'markup',
+      '#suffix' => '</div>',
+    );
+    if ($this->getSetting('classes')) {
+      $element += array('#prefix' => '<div class="' . $this->getSetting('classes') . '">');
+    }
+    else {
+      $element += array('#prefix' => '<div>');
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function settingsForm() {
 
     $form = parent::settingsForm();
@@ -62,10 +81,6 @@ class Accordion extends FieldGroupFormatterBase {
     return array(
       'effect' => 'none',
     ) + parent::defaultSettings();
-  }
-
-  public function render() {
-
   }
 
 }

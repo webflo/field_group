@@ -31,6 +31,27 @@ class AccordionItem extends FieldGroupFormatterBase {
   /**
    * {@inheritdoc}
    */
+  public function preRender(&$element) {
+
+    $active_class = $this->getSetting('collapsed') ? '' : ' field-group-accordion-active';
+    $extra_classes = $this->getSetting('classes') ? ' ' . $this->getSetting('classes') : '';
+
+    $element += array(
+      '#type' => 'markup',
+      '#prefix' => '<h3 class="field-group-format-toggler accordion-item' . $active_class . '">
+        <a href="#">' . String::checkPlain(\Drupal::translation()->translate($this->getLabel())) . '</a></h3>
+        <div class="field-group-format-wrapper' . $extra_classes . '">',
+      '#suffix' => '</div>',
+    );
+
+    if ($this->getSetting('description')) {
+      $element['#prefix'] .= '<div class="description">' . $this->getSetting('description') . '</div>';
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function settingsForm() {
 
     $form = parent::settingsForm();

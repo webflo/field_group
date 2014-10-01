@@ -183,6 +183,15 @@ function field_group_field_group_pre_render(&$element, &$group, &$rendering_obje
   if (function_exists($function)) {
     $function($element, $group, $rendering_object);
   }
+  else {
+    $manager = \Drupal::service('plugin.manager.field_group.formatters');
+    $plugin = $manager->getInstance(array(
+      'format_type' => $group->format_type,
+      'configuration' => array('label' => $group->label, 'settings' => $group->format_settings),
+      'context' => $group->context,
+    ));
+    $plugin->preRender($element);
+  }
 
 }
 
@@ -812,30 +821,6 @@ function field_group_pre_render_tab(&$element, $group, &$rendering_object) {
 
 /**
  * Implements field_group_pre_render_<format-type>.
- * Format type: Fieldset.
- *
- * @param $element
- *   The field group render array.
- * @param $group
- * The Field group object prepared for pre_render.
- * @param $rendering_object
- *   The entity / form beïng rendered.
- */
-function field_group_pre_render_fieldset(&$element, $group, &$rendering_object) {
-
-  $element += array(
-    '#type' => 'fieldset',
-    '#id' => drupal_html_id($group->group_name),
-    '#title' => String::checkPlain(t($group->label)),
-    '#pre_render' => array(),
-    '#attributes' => array('class' => explode(' ', $group->classes)),
-    '#description' => $group->description,
-  );
-
-}
-
-/**
- * Implements field_group_pre_render_<format-type>.
  * Format type: HTML element.
  *
  * @param $element
@@ -924,55 +909,6 @@ function field_group_pre_render_div(&$element, $group, &$rendering_object) {
     }
     $element['#suffix'] = '</div>';
   }
-  if (!empty($group->description)) {
-    $element['#prefix'] .= '<div class="description">' . $group->description . '</div>';
-  }
-
-}
-
-/**
- * Implements field_group_pre_render_<format-type>.
- * Format type: Accordion.
- *
- * @param $element
- *   The field group render array.
- * @param $group
- *   The Field group object prepared for pre_render.
- * @param $rendering_object
- *   The entity / form beïng rendered.
- */
-function field_group_pre_render_accordion(&$element, $group, &$rendering_object) {
-
-  // Add the jQuery UI accordion.
-  $element['#attached']['library'][] = 'field_group/formatter.accordion';
-
-  $element += array(
-    '#type' => 'markup',
-    '#prefix' => '<div class="' . $group->classes . '">',
-    '#suffix' => '</div>',
-  );
-}
-
-/**
- * Implements field_group_pre_render_<format-type>.
- * Format type: Accordion item.
- *
- * @param $element
- *   The field group render array.
- * @param $group
- *   The Field group object prepared for pre_render.
- * @param $rendering_object
- *   The entity / form beïng rendered.
- */
-function field_group_pre_render_accordion_item(&$element, $group, &$rendering_object) {
-
-  $element += array(
-    '#type' => 'markup',
-    '#prefix' => '<h3 class="field-group-format-toggler ' . $group->format_type . ($group->collapsed ? '' : ' field-group-accordion-active') . '"><a href="#">' . String::checkPlain(t($group->label)) . '</a></h3>
-    <div class="field-group-format-wrapper ' . $group->classes . '">',
-    '#suffix' => '</div>',
-    //'#attributes' => array('class' => array($group->format_type)),
-  );
   if (!empty($group->description)) {
     $element['#prefix'] .= '<div class="description">' . $group->description . '</div>';
   }

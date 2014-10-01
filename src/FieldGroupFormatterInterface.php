@@ -17,6 +17,16 @@ use Drupal\Component\Plugin\PluginInspectionInterface;
 interface FieldGroupFormatterInterface extends PluginInspectionInterface {
 
   /**
+   * @todo Create theming functions / templates for every format.
+   *
+   * Allows the field group formatter to manipulate the field group array and attach the formatters rendering element.
+   *
+   * @param array $element
+   *   The field group render array.
+   */
+  public function preRender(&$element);
+
+  /**
    * Returns a form to configure settings for the formatter.
    *
    * Invoked in field_group_field_ui_display_form_alter to allow

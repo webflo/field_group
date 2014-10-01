@@ -29,6 +29,33 @@ class Details extends FieldGroupFormatterBase {
   /**
    * {@inheritdoc}
    */
+  public function preRender(&$element) {
+    $element += array(
+      '#type' => 'details',
+      '#title' => String::checkPlain(\Drupal::translation()->translate($this->getLabel())),
+      '#open' => $this->getSetting('open')
+    );
+
+    if ($this->getSetting('id')) {
+      $element['#id'] = drupal_html_id($this->getSetting('id'));
+    }
+
+    if ($this->getSetting('classes')) {
+      $element += array(
+        '#attributes' => array('class' => $this->getSetting('classes')),
+      );
+    }
+
+    if ($this->getSetting('description')) {
+      $element += array(
+        '#description' => $this->getSetting('description'),
+      );
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function settingsForm() {
     $form = parent::settingsForm();
 
@@ -55,20 +82,6 @@ class Details extends FieldGroupFormatterBase {
     }
 
     return $summary;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function preRender($element) {
-    $element += array(
-      '#type' => 'details',
-      '#title' => String::checkPlain(\Drupal::translation()->translate($this->group->label)),
-      '#attributes' => array('class' => explode(' ', $this->group->classes)),
-      '#description' => $this->group->description,
-      '#open' => $this->getSetting('open')
-    );
-    return $element;
   }
 
   /**

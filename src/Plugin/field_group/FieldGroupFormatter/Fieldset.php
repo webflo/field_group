@@ -7,6 +7,7 @@
 
 namespace Drupal\field_group\Plugin\field_group\FieldGroupFormatter;
 
+use Drupal\Component\Utility\String;
 use Drupal\field_group\FieldGroupFormatterBase;
 
 /**
@@ -23,6 +24,34 @@ use Drupal\field_group\FieldGroupFormatterBase;
  * )
  */
 class Fieldset extends FieldGroupFormatterBase {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function preRender(&$element) {
+
+    $element += array(
+      '#type' => 'fieldset',
+      '#title' => String::checkPlain(\Drupal::translation()->translate($this->getLabel())),
+      '#pre_render' => array(),
+    );
+
+    if ($this->getSetting('description')) {
+      $element += array(
+        '#description' => $this->getSetting('description'),
+      );
+    }
+
+    if ($this->getSetting('id')) {
+      $element['#id'] = drupal_html_id($this->getSetting('id'));
+    }
+
+    if ($this->getSetting('classes')) {
+      $element += array(
+        '#attributes' => array('class' => $this->getSetting('classes')),
+      );
+    }
+  }
 
   /**
    * {@inheritdoc}

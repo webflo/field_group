@@ -26,6 +26,13 @@ class MultipageGroup extends FieldGroupFormatterBase {
   /**
    * {@inheritdoc}
    */
+  public function preRender($element) {
+    return $element;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function settingsForm() {
 
     $form = parent::settingsForm();

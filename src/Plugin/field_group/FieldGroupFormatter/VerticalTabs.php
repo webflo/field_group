@@ -24,8 +24,11 @@ use Drupal\field_group\FieldGroupFormatterBase;
  */
 class VerticalTabs extends FieldGroupFormatterBase {
 
-  public function render() {
-
+  /**
+   * {@inheritdoc}
+   */
+  public function preRender($element) {
+    return $element;
   }
 
 }
