@@ -24,7 +24,7 @@ class FieldGroupConverter implements ParamConverterInterface {
   /**
    * {@inheritdoc}
    */
-  public function convert($value, $definition, $name, array $defaults, \Symfony\Component\HttpFoundation\Request $request) {
+  public function convert($value, $definition, $name, array $defaults) {
     $config = \Drupal::config('field_group.'. $value)->get();
     return empty($config) ? NULL : $config;
   }

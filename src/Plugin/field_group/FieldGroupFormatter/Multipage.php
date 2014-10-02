@@ -30,8 +30,7 @@ class Multipage extends FieldGroupFormatterBase {
   /**
    * {@inheritdoc}
    */
-  public function preRender($element) {
-    return $element;
+  public function preRender(&$element) {
   }
 
   /**
