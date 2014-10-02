@@ -35,12 +35,9 @@ class Accordion extends FieldGroupFormatterBase {
       '#type' => 'markup',
       '#suffix' => '</div>',
     );
-    if ($this->getSetting('classes')) {
-      $element += array('#prefix' => '<div class="' . $this->getSetting('classes') . '">');
-    }
-    else {
-      $element += array('#prefix' => '<div>');
-    }
+
+    $css_classes = $this->getSetting('classes') ? '' : ' ' . $this->getSetting('classes');
+    $element += array('#prefix' => '<div class="field-group-accordion-wrapper' . $css_classes . '">');
   }
 
   /**
