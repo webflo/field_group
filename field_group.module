@@ -178,6 +178,8 @@ function field_group_field_group_pre_render(&$element, &$group, &$rendering_obje
 
   $element['#weight'] = $group->weight;
 
+
+
   // Call the pre render function for the format type.
   $function = "field_group_pre_render_" . str_replace("-", "_", $group->format_type);
   if (function_exists($function)) {
@@ -368,7 +370,7 @@ function field_group_build_entity_groups(&$vars, $context = 'view') {
   field_group_fields_nest($element, $nest_vars);
 
   // Allow others to alter the pre_rendered build.
-  drupal_alter('field_group_build_pre_render', $element);
+  Drupal::moduleHandler()->alter('field_group_build_pre_render', $element);
 
   // Return the element on forms.
   if ($context == 'form') {
@@ -508,7 +510,7 @@ function field_group_pre_render(& $element, $group, & $rendering_object) {
   }
 
   // Allow others to alter the pre_render.
-  drupal_alter('field_group_pre_render', $element, $group, $rendering_object);
+  Drupal::moduleHandler()->alter('field_group_pre_render', $element, $group, $rendering_object);
 
 }
 

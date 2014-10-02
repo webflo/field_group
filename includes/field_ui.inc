@@ -388,8 +388,8 @@ function field_group_add_row($name, $parent_options, $params) {
       '#title_display' => 'invisible',
       '#title' => t('Machine name for new group'),
       // This field should stay LTR even for RTL languages.
-      '#field_prefix' => '<span dir="ltr">group_',
-      '#field_suffix' => '</span>&lrm;',
+      '#field_prefix' => 'group_',
+      '#field_suffix' => '',
       '#attributes' => array('dir' => 'ltr'),
       '#size' => 15,
       '#description' => t('Group name (a-z, 0-9, _)'),
