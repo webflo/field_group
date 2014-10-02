@@ -84,8 +84,8 @@ function field_group_element_info() {
  * Implements hook_form_FORM_ID_alter().
  * Using hook_form_field_ui_form_display_overview_form_alter.
  */
-function field_group_form_field_ui_form_display_overview_form_alter(&$form, &$form_state) {
-  form_load_include($form_state, 'inc', 'field_group', 'includes/field_ui');
+function field_group_form_field_ui_form_display_overview_form_alter(&$form, FormStateInterface $form_state) {
+  $form_state->loadInclude('field_group', 'inc', 'includes/field_ui');
   field_group_field_ui_display_form_alter($form, $form_state, 'form');
 }
 
@@ -94,7 +94,7 @@ function field_group_form_field_ui_form_display_overview_form_alter(&$form, &$fo
  * Using hook_form_field_ui_display_overview_form_alter.
  */
 function field_group_form_field_ui_display_overview_form_alter(&$form, &$form_state) {
-  form_load_include($form_state, 'inc', 'field_group', 'includes/field_ui');
+  $form_state->loadInclude('field_group', 'inc', 'includes/field_ui');
   field_group_field_ui_display_form_alter($form, $form_state, 'view');
 }
 

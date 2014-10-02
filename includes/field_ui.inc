@@ -17,7 +17,7 @@ use Drupal\Component\Utility\String;
 function field_group_field_ui_form_params($form, $context) {
 
   $entity_type_definition = \Drupal::entityManager()->getDefinition($form['#entity_type']);
-  $admin_url = new Url($entity_type_definition->getLinkTemplate('admin-form'), array(
+  $admin_url = new Url($entity_type_definition->get('field_ui_base_route'), array(
     $entity_type_definition->getBundleEntityType() => $form['#bundle'],
   ));
 
@@ -86,8 +86,7 @@ function field_group_field_ui_display_form_alter(&$form, &$form_state, $context)
 
   $formatter_options = field_group_field_formatter_options($context);
 
-  $refresh_rows = isset($form_state['values']['refresh_rows']) ? $form_state['values']['refresh_rows'] : (isset($form_state['input']['refresh_rows']) ? $form_state['input']['refresh_rows'] : NULL);
-
+  $refresh_rows = $form_state->getValue('refresh_rows') ? $form_state->getValue('refresh_rows') : (isset($form_state->getUserInput()['refresh_rows']) ? $form_state->getUserInput()['refresh_rows'] : NULL);
   // Create the group rows and check actions.
   foreach ($form['#groups'] as $name) {
 
@@ -404,7 +403,7 @@ function field_group_add_row($name, $parent_options, $params) {
  */
 function field_group_field_ui_create_vertical_tabs(&$form, &$form_state, $params) {
 
-  $form_state['field_group_params'] = $params;
+  $form_state->set('field_group_params', $params);
 
   $existing_group_config = \Drupal::configFactory()->listAll('field_group.' . $params->entity_type . '.' . $params->bundle);
   $displays = array();
