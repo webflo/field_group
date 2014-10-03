@@ -67,7 +67,7 @@ class RouteSubscriber extends RouteSubscriberBase {
           array('_permission' => 'administer site configuration'),
           $options
         );
-        $collection->add("field_group.delete_$entity_type_id", $route);
+        $collection->add("field_ui.field_group_delete_$entity_type_id", $route);
 
       }
     }
@@ -77,8 +77,9 @@ class RouteSubscriber extends RouteSubscriberBase {
    * {@inheritdoc}
    */
   public static function getSubscribedEvents() {
-    $events = parent::getSubscribedEvents();
-    $events[RoutingEvents::ALTER] = array('onAlterRoutes', -100);
+    //$events = parent::getSubscribedEvents();
+    // Come after field_ui, config_translation.
+    $events[RoutingEvents::ALTER] = array('onAlterRoutes', -210);
     return $events;
   }
 

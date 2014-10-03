@@ -9,6 +9,7 @@
 use Drupal\Core\Form\FormState;
 use Drupal\Core\Render\Element;
 use Drupal\Core\Url;
+Use Drupal\Core\Link;
 use Drupal\Component\Utility\String;
 
 /**
@@ -247,7 +248,18 @@ function field_group_field_ui_display_form_alter(&$form, FormState $form_state, 
         '#prefix' => '<div class="field-plugin-settings-edit-wrapper">',
         '#suffix' => '</div>',
       );
-      $table[$name]['settings_edit']['#suffix'] .= l(t('delete'), $params->admin_path . '/groups/' . $config_name_suffix . '/delete');
+
+      $entity_type_definition = \Drupal::entityManager()->getDefinition($form['#entity_type']);
+      $entity_type_id = $entity_type_definition->id();
+      $admin_url = new Url(
+        'field_ui.field_group_delete_' . $entity_type_id,
+        array(
+          $entity_type_definition->getBundleEntityType() => $form['#bundle'],
+          'field_group' => $config_name_suffix,
+        )
+      );
+
+      $table[$name]['settings_edit']['#suffix'] .= Drupal::l(t('delete'), $admin_url);
     }
 
   }

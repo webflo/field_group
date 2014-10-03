@@ -8,6 +8,7 @@
 namespace Drupal\field_group\Form;
 
 use Drupal\Core\Form\ConfirmFormBase;
+use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Drupal\Core\Url;
@@ -42,14 +43,14 @@ class FieldGroupDeleteForm extends ConfirmFormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, array &$form_state, $field_group = '', $test = '') {
+  public function buildForm(array $form, FormStateInterface $form_state, $field_group = '', $test = '') {
     return parent::buildForm($form, $form_state);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, array &$form_state) {
+  public function submitForm(array &$form, FormStateInterface $form_state) {
 
     $bundles = entity_get_bundles();
     $bundle_label = $bundles[$this->fieldGroup->entity_type][$this->fieldGroup->bundle]['label'];
