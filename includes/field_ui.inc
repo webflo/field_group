@@ -6,8 +6,9 @@
  * needed on the Fields UI Manage forms (display and fields).
  */
 
-use Drupal\Core\Url;
+use Drupal\Core\Form\FormState;
 use Drupal\Core\Render\Element;
+use Drupal\Core\Url;
 use Drupal\Component\Utility\String;
 
 /**
@@ -46,7 +47,7 @@ function field_group_field_ui_form_params($form, $context) {
 /**
  * Function to alter the display overview screens.
  */
-function field_group_field_ui_display_form_alter(&$form, &$form_state, $context) {
+function field_group_field_ui_display_form_alter(&$form, FormState $form_state, $context) {
 
   // Only start altering the form if we need to.
   if (empty($form['#fields']) && empty($form['#extra'])) {
@@ -58,6 +59,8 @@ function field_group_field_ui_display_form_alter(&$form, &$form_state, $context)
   $form['#context'] = $context;
 
   $table = &$form['fields'];
+  $form_state_values = $form_state->getValues();
+  $field_group_form_state = $form_state->get('field_group');
 
   // Add a region for 'add_new' rows, but only when fields are
   // available and thus regions.
@@ -86,14 +89,14 @@ function field_group_field_ui_display_form_alter(&$form, &$form_state, $context)
 
   $formatter_options = field_group_field_formatter_options($context);
 
-  $refresh_rows = $form_state->getValue('refresh_rows') ? $form_state->getValue('refresh_rows') : (isset($form_state->getUserInput()['refresh_rows']) ? $form_state->getUserInput()['refresh_rows'] : NULL);
+  $refresh_rows = isset($form_state_values['refresh_rows']) ? $form_state_values['refresh_rows'] : (isset($form_state->getUserInput()['refresh_rows']) ? $form_state->getUserInput()['refresh_rows'] : NULL);
   // Create the group rows and check actions.
   foreach ($form['#groups'] as $name) {
 
-    // Play around with form_state so we only need to hold things
+    // Play around with form_sxtate so we only need to hold things
     // between requests, until the save button was hit.
-    if (isset($form_state['field_group'][$name])) {
-      $group = & $form_state['field_group'][$name];
+    if (isset($form_state_values['refresh_rows'][$name])) {
+      $group = & $field_group_form_state[$name];
     }
     else {
       $group = & $params->groups[$name];
@@ -105,20 +108,19 @@ function field_group_field_ui_display_form_alter(&$form, &$form_state, $context)
     // formatter settings for the group.
     // This needs to be done first, so all fields are updated before creating form elements.
     if (isset($refresh_rows) && $refresh_rows == $name) {
-      $settings = isset($form_state['values']['fields'][$name]) ? $form_state['values']['fields'][$name] : (isset($form_state['input']['fields'][$name]) ? $form_state['input']['fields'][$name] : NULL);
+      $settings = isset($form_state_values['fields'][$name]) ? $form_state_values['fields'][$name] : (isset($form_state->getUserInput()['fields'][$name]) ? $form_state->getUserInput()['fields'][$name] : NULL);
       if (array_key_exists('settings_edit', $settings)) {
-        //$group->format_type = $form_state['field_group'][$name]->format_type;
-        $group = $form_state['field_group'][$name];
+        $group = $field_group_form_state[$name];
       }
       field_group_formatter_row_update($group, $settings);
     }
 
     // Save the group when the configuration is submitted.
-    if (!empty($form_state['values'][$name . '_plugin_settings_update'])) {
-      field_group_formatter_settings_update($group, $form_state['values']['fields'][$name]);
+    if (!empty($form_state_values[$name . '_plugin_settings_update'])) {
+      field_group_formatter_settings_update($group, $form_state_values['fields'][$name]);
     }
     // After all updates are finished, let the form_state know.
-    $form_state['field_group'][$name] = $group;
+    $field_group_form_state[$name] = $group;
 
     $settings = field_group_format_settings_form($group, $form, $form_state);
 
@@ -182,17 +184,17 @@ function field_group_field_ui_display_form_alter(&$form, &$form_state, $context)
 
     $base_button = array(
       '#submit' => array(
-        array($form_state['build_info']['callback_object'], 'multistepSubmit')
+        array($form_state->getBuildInfo()['callback_object'], 'multistepSubmit')
       ),
       '#ajax' => array(
-        'callback' => array($form_state['build_info']['callback_object'], 'multistepAjax'),
+        'callback' => array($form_state->getBuildInfo()['callback_object'], 'multistepAjax'),
         'wrapper' => 'field-display-overview-wrapper',
         'effect' => 'fade',
       ),
       '#field_name' => $name,
     );
 
-    if ($form_state['plugin_settings_edit'] == $name) {
+    if ($form_state->get('plugin_settings_edit') == $name) {
       $table[$name]['format']['#cell_attributes'] = array('colspan' => 2);
       $table[$name]['format']['format_settings'] = array(
         '#type' => 'container',
@@ -478,10 +480,10 @@ function field_group_display_overview_row_region($row) {
 /**
  * Validate handler for the overview screens.
  * @param Array $form The complete form.
- * @param Array $form_state The state of the form.
+ * @param FormStateInterface $form_state The state of the form.
  */
-function field_group_field_overview_validate($form, &$form_state) {
-  $form_values = $form_state['values']['fields'];
+function field_group_field_overview_validate($form, FormState $form_state) {
+  $form_values = $form_state->getValue('fields');
   $entity_type = $form['#entity_type'];
   $bundle = $form['#bundle'];
   $context = $form['#context'];
@@ -525,11 +527,12 @@ function field_group_field_overview_validate($form, &$form_state) {
 /**
  * Submit handler for the overview screens.
  * @param Array $form The complete form.
- * @param Array $form_state The state of the form.
+ * @param FormStateInterface $form_state The state of the form.
  */
-function field_group_field_overview_submit($form, &$form_state) {
+function field_group_field_overview_submit($form, FormState $form_state) {
 
-  $form_values = $form_state['values']['fields'];
+  $form_values = $form_state->getValue('fields');
+  $fields_added = $form_state->getValue('fields_added');
   $entity_type = $form['#entity_type'];
   $bundle = $form['#bundle'];
   $mode = $form['#mode'];
@@ -541,11 +544,11 @@ function field_group_field_overview_submit($form, &$form_state) {
     if (!empty($value['parent'])) {
       // Substitute newly added fields, in case they were dragged
       // directly in a group.
-      if ($name == '_add_new_field' && isset($form_state['fields_added']['_add_new_field'])) {
-        $name = $form_state['fields_added']['_add_new_field'];
+      if ($name == '_add_new_field' && isset($fields_added, $fields_added['_add_new_field'])) {
+        $name =  $fields_added['_add_new_field'];
       }
-      elseif ($name == '_add_existing_field' && isset($form_state['fields_added']['_add_existing_field'])) {
-        $name = $form_state['fields_added']['_add_existing_field'];
+      elseif ($name == '_add_existing_field' && isset($fields_added, $fields_added['_add_existing_field'])) {
+        $name = $fields_added['_add_existing_field'];
       }
       $children[$value['parent']][$name] = $name;
     }
@@ -575,7 +578,8 @@ function field_group_field_overview_submit($form, &$form_state) {
     field_group_group_save($new_group);
 
     // Store new group information for any additional submit handlers.
-    $form_state['groups_added']['_add_new_group'] = $new_group->group_name;
+    $groups_added = $form_state->get('groups_added');
+    $groups_added['_add_new_group'] = $new_group->group_name;
     drupal_set_message(t('New group %label successfully created.', array('%label' => $new_group->label)));
 
     // Replace the newly created group in the $children array, in case it was
@@ -591,27 +595,36 @@ function field_group_field_overview_submit($form, &$form_state) {
 
   // Update existing groups.
   $groups = field_group_info_groups($entity_type, $bundle, $context, $mode, TRUE);
-  foreach ($form['#groups'] as $group_name) {
-    $group = $groups[$group_name];
-    $group->label = $form_state['field_group'][$group_name]->label;
-    $group->children = array_keys($children[$group_name]);
-    $group->parent_name = $form_values[$group_name]['parent'];
-    $group->weight = $form_values[$group_name]['weight'];
+  $field_group_form_state = $form_state->get('field_group');
+  if (!empty($field_group_form_state)) {
+    foreach ($form['#groups'] as $group_name) {
 
-    $old_format_type = $group->format_type;
-    $group->format_type = isset($form_values[$group_name]['format']['type']) ? $form_values[$group_name]['format']['type'] : 'visible';
-    if (isset($form_state['field_group'][$group_name]->format_settings)) {
-      $group->format_settings = $form_state['field_group'][$group_name]->format_settings;
+      // Only save updated groups.
+      if (!isset($field_group_form_state[$group_name])) {
+        continue;
+      }
+
+      $group = $groups[$group_name];
+      $group->label = $field_group_form_state[$group_name]->label;
+      $group->children = array_keys($children[$group_name]);
+      $group->parent_name = $form_values[$group_name]['parent'];
+      $group->weight = $form_values[$group_name]['weight'];
+
+      $old_format_type = $group->format_type;
+      $group->format_type = isset($form_values[$group_name]['format']['type']) ? $form_values[$group_name]['format']['type'] : 'visible';
+      if (isset($field_group_form_state[$group_name]->format_settings)) {
+        $group->format_settings = $field_group_form_state[$group_name]->format_settings;
+      }
+
+      // If the format type is changed, make sure we have all required format settings.
+      if ($group->format_type != $old_format_type) {
+        $default_formatter_settings = _field_group_get_default_formatter_settings($group->format_type, $context);
+        $group->format_settings += $default_formatter_settings;
+        $group->format_settings['settings'] += $default_formatter_settings['settings'];
+      }
+
+      field_group_group_save($group);
     }
-
-    // If the format type is changed, make sure we have all required format settings.
-    if ($group->format_type != $old_format_type) {
-      $default_formatter_settings = _field_group_get_default_formatter_settings($group->format_type, $context);
-      $group->format_settings += $default_formatter_settings;
-      $group->format_settings['settings'] += $default_formatter_settings['settings'];
-    }
-
-    field_group_group_save($group);
   }
 
   \Drupal::cache()->invalidate('field_groups');
@@ -637,10 +650,12 @@ function field_group_format_settings_form(&$group, $form, $form_state) {
 /**
  * Validate the entered css class from the submitted format settings.
  * @param Array $element The validated element
- * @param Array $form_state The state of the form.
+ * @param FormState $form_state The state of the form.
  */
-function field_group_validate_css_class($element, &$form_state) {
-  if (!empty($form_state['values']['fields'][$form_state['plugin_settings_edit']]['settings_edit_form']['settings']['classes']) && !preg_match('!^[A-Za-z0-9-_ ]+$!', $form_state['values']['fields'][$form_state['plugin_settings_edit']]['settings_edit_form']['settings']['classes'])) {
+function field_group_validate_css_class($element, FormState $form_state) {
+  $form_state_values = $form_state->getValues();
+  $plugin_name = $form_state->get('plugin_settings_edit');
+  if (!empty($form_state_values['fields'][$plugin_name]['settings_edit_form']['settings']['classes']) && !preg_match('!^[A-Za-z0-9-_ ]+$!', $form_state_values['fields'][$plugin_name]['settings_edit_form']['settings']['classes'])) {
     \Drupal::formBuilder()->setError($element, $form_state, t('The css class must include only letters, numbers, underscores and dashes.'));
   }
 }
@@ -651,7 +666,9 @@ function field_group_validate_css_class($element, &$form_state) {
  * @param Array $form_state The state of the form.
  */
 function field_group_validate_id($element, &$form_state) {
-  if (!empty($form_state['values']['fields'][$form_state['plugin_settings_edit']]['settings_edit_form']['settings']['id']) && !preg_match('!^[A-Za-z0-9-_]+$!', $form_state['values']['fields'][$form_state['plugin_settings_edit']]['settings_edit_form']['settings']['id'])) {
+  $form_state_values = $form_state->getValues();
+  $plugin_name = $form_state->get('plugin_settings_edit');
+  if (!empty($form_state_values['fields'][$plugin_name]['settings_edit_form']['settings']['id']) && !preg_match('!^[A-Za-z0-9-_]+$!', $form_state_values['fields'][$plugin_name]['settings_edit_form']['settings']['id'])) {
     \Drupal::formBuilder()->setError($element, $form_state, t('The id must include only letters, numbers, underscores and dashes.'));
   }
 }
@@ -714,50 +731,57 @@ function field_group_format_settings_summary($group_name, $group) {
 /**
  * Validate handler to validate saving existing fieldgroups from one view mode or form to another.
  */
-function field_group_field_ui_clone_field_groups_validate($form, &$form_state) {
+function field_group_field_ui_clone_field_groups_validate($form, FormState $form_state) {
 
-  list($context, $mode) = explode('.', $form_state['values']['fieldgroup_clone']);
-  $form_state['#source_groups'] = $form_state['#groups_to_clone'] = field_group_info_groups($form_state['field_group_params']->entity_type, $form_state['field_group_params']->bundle, $context, $mode);
+  $form_state_values = $form_state->getValues();
+  $field_group_params = $form_state->get('field_group_params');
+
+  list($context, $mode) = explode('.', $form_state_values['fieldgroup_clone']);
+  $source_groups = field_group_info_groups($field_group_params->entity_type, $field_group_params->bundle, $context, $mode);
 
   // Check for types are not known in current mode.
-  if ($form_state['field_group_params']->context != 'form') {
+  if ($field_group_params->context != 'form') {
     $non_existing_types = array('multipage', 'multipage-group');
   }
   else {
     $non_existing_types = array('div');
   }
 
-  foreach ($form_state['#source_groups'] as $key => $group) {
+  foreach ($source_groups as $key => $group) {
     if (in_array($group->format_type, $non_existing_types)) {
-      unset($form_state['#source_groups'][$key]);
+      unset($source_groups[$key]);
       drupal_set_message(t('Skipping @group because this type does not exist in current mode', array('@group' => $group->label)), 'warning');
     }
   }
 
-  if (empty($form_state['#source_groups'])) {
+  if (empty($source_groups)) {
     // Report error found with selection.
     \Drupal::formBuilder()->setErrorByName('additional_settings][fieldgroup_clone', $form_state, t('No field groups were found in selected view mode.'));
     return;
   }
+
+  $form_state->set('#source_groups', $source_groups);
 
 }
 
 /**
  * Submit handler to save existing fieldgroups from one view mode or form to another.
  */
-function field_group_field_ui_clone_field_groups($form, &$form_state) {
+function field_group_field_ui_clone_field_groups($form, FormState $form_state) {
 
-  $fields = array_keys($form_state['values']['fields']);
-  if (!empty($form_state['#source_groups'])) {
+  $fields = array_keys($form_state->getValue('fields'));
+  $source_groups = $form_state->get('#source_groups');
+  if ($source_groups) {
 
-    foreach ($form_state['#source_groups'] as $source_group) {
+    $field_group_params = $form_state->get('field_group_params');
+    foreach ($source_groups as $source_group) {
       if (in_array($source_group->group_name, $fields)) {
         drupal_set_message(t('Fieldgroup @group is not cloned since a group already exists with the same name.', array('@group' => $source_group->group_name)), 'warning');
         continue;
       }
 
-      $source_group->context = $form_state['field_group_params']->context;
-      $source_group->mode = $form_state['field_group_params']->mode;
+      $source_group->context = $field_group_params->context;
+      $source_group->mode = $field_group_params->mode;
       $source_group->children = array();
       field_group_group_save($source_group);
 
