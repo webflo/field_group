@@ -6,7 +6,7 @@
  * needed on the Fields UI Manage forms (display and fields).
  */
 
-use Drupal\Core\Form\FormState;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Element;
 use Drupal\Core\Url;
 Use Drupal\Core\Link;
@@ -48,7 +48,7 @@ function field_group_field_ui_form_params($form, $context) {
 /**
  * Function to alter the display overview screens.
  */
-function field_group_field_ui_display_form_alter(&$form, FormState $form_state, $context) {
+function field_group_field_ui_display_form_alter(&$form, FormStateInterface $form_state, $context) {
 
   // Only start altering the form if we need to.
   if (empty($form['#fields']) && empty($form['#extra'])) {
@@ -494,7 +494,7 @@ function field_group_display_overview_row_region($row) {
  * @param Array $form The complete form.
  * @param FormStateInterface $form_state The state of the form.
  */
-function field_group_field_overview_validate($form, FormState $form_state) {
+function field_group_field_overview_validate($form, FormStateInterface $form_state) {
   $form_values = $form_state->getValue('fields');
   $entity_type = $form['#entity_type'];
   $bundle = $form['#bundle'];
@@ -541,7 +541,7 @@ function field_group_field_overview_validate($form, FormState $form_state) {
  * @param Array $form The complete form.
  * @param FormStateInterface $form_state The state of the form.
  */
-function field_group_field_overview_submit($form, FormState $form_state) {
+function field_group_field_overview_submit($form, FormStateInterface $form_state) {
 
   $form_values = $form_state->getValue('fields');
   $fields_added = $form_state->getValue('fields_added');
@@ -662,9 +662,9 @@ function field_group_format_settings_form(&$group, $form, $form_state) {
 /**
  * Validate the entered css class from the submitted format settings.
  * @param Array $element The validated element
- * @param FormState $form_state The state of the form.
+ * @param FormStateInterface $form_state The state of the form.
  */
-function field_group_validate_css_class($element, FormState $form_state) {
+function field_group_validate_css_class($element, FormStateInterface $form_state) {
   $form_state_values = $form_state->getValues();
   $plugin_name = $form_state->get('plugin_settings_edit');
   if (!empty($form_state_values['fields'][$plugin_name]['settings_edit_form']['settings']['classes']) && !preg_match('!^[A-Za-z0-9-_ ]+$!', $form_state_values['fields'][$plugin_name]['settings_edit_form']['settings']['classes'])) {
@@ -675,9 +675,9 @@ function field_group_validate_css_class($element, FormState $form_state) {
 /**
  * Validate the entered id attribute from the submitted format settings.
  * @param Array $element The validated element
- * @param Array $form_state The state of the form.
+ * @param FormStateInterface $form_state The state of the form.
  */
-function field_group_validate_id($element, &$form_state) {
+function field_group_validate_id($element, FormStateInterface $form_state) {
   $form_state_values = $form_state->getValues();
   $plugin_name = $form_state->get('plugin_settings_edit');
   if (!empty($form_state_values['fields'][$plugin_name]['settings_edit_form']['settings']['id']) && !preg_match('!^[A-Za-z0-9-_]+$!', $form_state_values['fields'][$plugin_name]['settings_edit_form']['settings']['id'])) {
@@ -743,7 +743,7 @@ function field_group_format_settings_summary($group_name, $group) {
 /**
  * Validate handler to validate saving existing fieldgroups from one view mode or form to another.
  */
-function field_group_field_ui_clone_field_groups_validate($form, FormState $form_state) {
+function field_group_field_ui_clone_field_groups_validate($form, FormStateInterface $form_state) {
 
   $form_state_values = $form_state->getValues();
   $field_group_params = $form_state->get('field_group_params');
@@ -779,7 +779,7 @@ function field_group_field_ui_clone_field_groups_validate($form, FormState $form
 /**
  * Submit handler to save existing fieldgroups from one view mode or form to another.
  */
-function field_group_field_ui_clone_field_groups($form, FormState $form_state) {
+function field_group_field_ui_clone_field_groups($form, FormStateInterface $form_state) {
 
   $fields = array_keys($form_state->getValue('fields'));
   $source_groups = $form_state->get('#source_groups');

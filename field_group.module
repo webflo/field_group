@@ -8,7 +8,7 @@
 use Drupal\Component\Utility\Xss;
 use Drupal\Component\Utility\String;
 use Drupal\Core\Render\Element;
-use Drupal\Core\Form\FormState;
+use Drupal\Core\Form\FormStateInterface;
 
 
 module_load_include('inc', 'field_group', 'includes/helpers');
@@ -85,7 +85,7 @@ function field_group_element_info() {
  * Implements hook_form_FORM_ID_alter().
  * Using hook_form_field_ui_form_display_overview_form_alter.
  */
-function field_group_form_field_ui_form_display_overview_form_alter(&$form, FormState $form_state) {
+function field_group_form_field_ui_form_display_overview_form_alter(&$form, FormStateInterface $form_state) {
   $form_state->loadInclude('field_group', 'inc', 'includes/field_ui');
   field_group_field_ui_display_form_alter($form, $form_state, 'form');
 }
@@ -94,7 +94,7 @@ function field_group_form_field_ui_form_display_overview_form_alter(&$form, Form
  * Implements hook_form_FORM_ID_alter().
  * Using hook_form_field_ui_display_overview_form_alter.
  */
-function field_group_form_field_ui_display_overview_form_alter(&$form, FormState $form_state) {
+function field_group_form_field_ui_display_overview_form_alter(&$form, FormStateInterface $form_state) {
   $form_state->loadInclude('field_group', 'inc', 'includes/field_ui');
   field_group_field_ui_display_form_alter($form, $form_state, 'view');
 }
@@ -116,7 +116,7 @@ function field_group_field_info_max_weight($entity_type, $bundle, $context, $con
 /**
  * Implements hook_field_attach_form().
  */
-function field_group_field_attach_form($entity_type, $entity, &$form, FormState $form_state, $langcode) {
+function field_group_field_attach_form($entity_type, $entity, &$form, FormStateInterface $form_state, $langcode) {
 
   $form['#attached']['css'][] = drupal_get_path('module', 'field_group') . '/field_group.field_ui.css';
 
@@ -251,7 +251,7 @@ function field_group_field_group_build_pre_render_alter(& $element) {
  * @return
  *   The processed element.
  */
-function form_process_horizontal_tabs($element, FormState $form_state, $on_form = TRUE) {
+function form_process_horizontal_tabs($element, FormStateInterface $form_state, $on_form = TRUE) {
 
   // Inject a new details as child, so that form_process_details() processes
   // this details element like any other details.
@@ -1073,7 +1073,7 @@ function field_group_pre_render_tabs(&$element, $group, &$rendering_object) {
     '#default_tab' => '',
   );
 
-  $form_state = new FormState();
+  $form_state = new Drupal\Core\Form\FormState();
   $element = form_process_vertical_tabs($element, $form_state);
 
   // Make sure the group has 1 child. This is needed to succeed at form_pre_render_vertical_tabs().
