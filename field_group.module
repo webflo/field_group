@@ -191,7 +191,7 @@ function field_group_field_group_pre_render(&$element, &$group, &$rendering_obje
     $plugin = $manager->getInstance(array(
       'format_type' => $group->format_type,
       'configuration' => array('label' => $group->label, 'settings' => $group->format_settings),
-      'context' => $group->context,
+      'group' => $group,
     ));
     $plugin->preRender($element);
   }
@@ -563,7 +563,7 @@ function field_group_group_save(& $group) {
  */
 function field_group_group_delete($group) {
   Drupal::config(_field_group_get_config_name($group))->delete();
-  module_invoke_all('field_group_delete_field_group', $group);
+  Drupal::moduleHandler()->invokeAll('field_group_delete_field_group', array($group));
 }
 
 /**

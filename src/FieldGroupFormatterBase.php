@@ -17,6 +17,12 @@ use Drupal\Core\Field\PluginSettingsBase;
 abstract class FieldGroupFormatterBase extends PluginSettingsBase implements FieldGroupFormatterInterface {
 
   /**
+   * The group this formatter needs to render.
+   * @var stdClass
+   */
+  protected $group;
+
+  /**
    * The formatter settings.
    *
    * @var array
@@ -51,20 +57,21 @@ abstract class FieldGroupFormatterBase extends PluginSettingsBase implements Fie
    *   The plugin_id for the formatter.
    * @param mixed $plugin_definition
    *   The plugin implementation definition.
+   * @param $group
+   *   The group object.
    * @param array $settings
    *   The formatter settings.
    * @param string $label
    *   The formatter label.
-   * @param string $context
-   *   The display context.
    */
-  public function __construct($plugin_id, $plugin_definition, array $settings, $label, $context) {
+  public function __construct($plugin_id, $plugin_definition, $group, array $settings, $label) {
 
     parent::__construct(array(), $plugin_id, $plugin_definition);
 
+    $this->group = $group;
     $this->settings = $settings;
     $this->label = $label;
-    $this->context = $context;
+    $this->context = $group->context;
   }
 
   /**

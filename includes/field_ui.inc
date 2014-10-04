@@ -262,6 +262,8 @@ function field_group_field_ui_display_form_alter(&$form, FormStateInterface $for
       $table[$name]['settings_edit']['#suffix'] .= Drupal::l(t('delete'), $admin_url);
     }
 
+    $form_state->set('field_group', $field_group_form_state);
+
   }
 
   // Additional row: add new group.
@@ -652,7 +654,7 @@ function field_group_format_settings_form(&$group, $form, $form_state) {
   $plugin = $manager->getInstance(array(
     'format_type' => $group->format_type,
     'configuration' => array('label' => $group->label, 'settings' => $group->format_settings),
-    'context' => $group->context,
+    'group' => $group,
   ));
 
   return $plugin->settingsForm($form, $form_state);
@@ -729,7 +731,7 @@ function field_group_format_settings_summary($group_name, $group) {
   $plugin = $manager->getInstance(array(
     'format_type' => $group->format_type,
     'configuration' => array('label' => $group->label, 'settings' => $group->format_settings),
-    'context' => $group->context,
+    'group' => $group,
   ));
 
   $summary = $plugin->settingsSummary();

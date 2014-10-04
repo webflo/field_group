@@ -10,12 +10,12 @@ namespace Drupal\field_group\Plugin\field_group\FieldGroupFormatter;
 use Drupal\field_group\FieldGroupFormatterBase;
 
 /**
- * Plugin implementation of the 'vertical_tab' formatter.
+ * Plugin implementation of the 'tab' formatter.
  *
  * @FieldGroupFormatter(
- *   id = "vertical_tab",
- *   label = @Translation("Vertical tab"),
- *   description = @Translation("This fieldgroup renders the content in a fieldset, part of vertical tabs group."),
+ *   id = "tab",
+ *   label = @Translation("Tab"),
+ *   description = @Translation("This fieldgroup renders the content as a tab."),
  *   format_types = {
  *     "open",
  *     "closed",
@@ -26,12 +26,33 @@ use Drupal\field_group\FieldGroupFormatterBase;
  *   },
  * )
  */
-class VerticalTab extends FieldGroupFormatterBase {
+class Tab extends FieldGroupFormatterBase {
 
   /**
    * {@inheritdoc}
    */
   public function preRender(&$element) {
+
+    $add = array(
+      '#type' => 'details',
+      '#id' => 'edit-' . $this->group->group_name,
+      '#title' => String::checkPlain(\Drupal::translation()->translate($this->getLabel())),
+      '#description' => $this->getSetting('description'),
+    );
+
+    if ($this->getSetting('classes')) {
+      $add['#attributes'] = array('class' => $this->getSetting('classes'));
+    }
+
+    // Front-end and back-end on configuration will lead
+    // to vertical tabs nested in a separate vertical group.
+    if (!empty($this->group->parent_name)) {
+      $add['#group'] = $this->group->parent_name;
+      $add['#parents'] = array($add['#group']);
+    }
+
+    $element += $add;
+
   }
 
   /**

@@ -49,7 +49,7 @@ class FieldGroupFormatterPluginManager extends DefaultPluginManager {
       return $plugin_class::create(\Drupal::getContainer(), $configuration, $plugin_id, $plugin_definition);
     }
 
-    return new $plugin_class($plugin_id, $plugin_definition, $configuration['settings'], $configuration['label'], $configuration['context']);
+    return new $plugin_class($plugin_id, $plugin_definition, $configuration['group'], $configuration['settings'], $configuration['label']);
   }
 
   /**
@@ -58,7 +58,7 @@ class FieldGroupFormatterPluginManager extends DefaultPluginManager {
    * @param array $options
    *   An array with the following key/value pairs:
    *   - format_type: The current format type.
-   *   - context: (string) The current display context.
+   *   - group: The current group.
    *   - prepare: (bool, optional) Whether default values should get merged in
    *     the 'configuration' array. Defaults to TRUE.
    *   - configuration: (array) the configuration for the formatter. The
@@ -76,7 +76,7 @@ class FieldGroupFormatterPluginManager extends DefaultPluginManager {
   public function getInstance(array $options) {
     $configuration = $options['configuration'];
     $format_type = $options['format_type'];
-    $context = $options['context'];
+    $context = $options['group']->context;
 
     // Fill in default configuration if needed.
     if (!isset($options['prepare']) || $options['prepare'] == TRUE) {
@@ -92,7 +92,7 @@ class FieldGroupFormatterPluginManager extends DefaultPluginManager {
     }
 
     $configuration += array(
-      'context' => $context,
+      'group' => $options['group'],
     );
 
     return $this->createInstance($plugin_id, $configuration);
