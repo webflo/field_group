@@ -634,7 +634,6 @@ function field_group_field_overview_submit($form, FormStateInterface $form_state
       if ($group->format_type != $old_format_type) {
         $default_formatter_settings = _field_group_get_default_formatter_settings($group->format_type, $context);
         $group->format_settings += $default_formatter_settings;
-        $group->format_settings['settings'] += $default_formatter_settings['settings'];
       }
 
       field_group_group_save($group);
