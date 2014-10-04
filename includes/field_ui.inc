@@ -300,10 +300,6 @@ function field_group_field_ui_display_form_alter(&$form, FormStateInterface $for
         'parent' => 'multipage-group',
         'message' => 'Each Multipage element needs to have a parent Multipage group element.',
       ),
-      'htab' => array(
-        'parent' => 'htabs',
-        'message' => 'Each Horizontal tab element needs to have a parent Horizontal tabs group element.',
-      ),
       'accordion-item' => array(
         'parent' => 'accordion',
         'message' => 'Each Accordion item element needs to have a parent Accordion group element.',
@@ -314,7 +310,7 @@ function field_group_field_ui_display_form_alter(&$form, FormStateInterface $for
     if ($context == 'view') {
       $parent_requirements['tab'] = array(
         'parent' => 'tabs',
-        'message' => 'Each Vertical tab element needs to have a parent Vertical tabs group element.',
+        'message' => 'Each tab element needs to have a parent tabs group element.',
       );
     }
 

@@ -280,8 +280,8 @@ function form_process_horizontal_tabs($element, FormStateInterface $form_state, 
   // form is rendered, e.g. on preview pages or when form validation
   // fails.
   $name = implode('__', $element['#parents']);
-  if (isset($form_state['values'][$name . '__active_tab'])) {
-    $element['#default_tab'] = $form_state['values'][$name . '__active_tab'];
+  if ($form_state->hasValue($name . '__active_tab')){
+    $element['#default_tab'] = $form_state->getValue($name . '__active_tab');
   }
   $element[$name . '__active_tab'] = array(
     '#type' => 'hidden',
@@ -1048,44 +1048,6 @@ function field_group_pre_render_multipage(&$element, $group, &$rendering_object)
   );
 
   $element['#attached']['library'][] = array('field_group', 'multipage');
-}
-
-/**
- * Implements field_group_pre_render_<format-type>.
- * Format type: Vertical tabs wrapper.
- *
- * @param $element
- *   The field group render array.
- * @param $group
- *   The Field group object prepared for pre_render.
- * @param $rendering_object
- *   The entity / form beïng rendered.
- */
-function field_group_pre_render_tabs(&$element, $group, &$rendering_object) {
-
-  $element += array(
-    '#type' => 'vertical_tabs',
-    '#theme_wrappers' => array('vertical_tabs'),
-    '#prefix' => '<div class="field-group-' . $group->format_type . '-wrapper ' . $group->classes . '">',
-    '#suffix' => '</div>',
-    '#tree' => TRUE,
-    '#parents' => array($group->group_name),
-    '#default_tab' => '',
-  );
-
-  $form_state = new Drupal\Core\Form\FormState();
-  $element = form_process_vertical_tabs($element, $form_state);
-
-  // Make sure the group has 1 child. This is needed to succeed at form_pre_render_vertical_tabs().
-  // Skipping this would force us to move all child groups to this array, making it an un-nestable.
-  $element['group']['#groups'][$group->group_name] = array(0 => array());
-  $element['group']['#groups'][$group->group_name]['#group_exists'] = TRUE;
-
-  // By default vertical_tabs don't have titles but you can override it in the theme.
-  if (!empty($group->label)) {
-    $element['#title'] = String::checkPlain($group->label);
-  }
-
 }
 
 /**

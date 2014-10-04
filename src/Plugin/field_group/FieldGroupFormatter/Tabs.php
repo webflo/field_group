@@ -7,6 +7,7 @@
 
 namespace Drupal\field_group\Plugin\field_group\FieldGroupFormatter;
 
+use Drupal\Component\Utility\String;
 use Drupal\field_group\FieldGroupFormatterBase;
 
 /**
@@ -30,28 +31,29 @@ class Tabs extends FieldGroupFormatterBase {
   public function preRender(&$element) {
 
     $element += array(
-      '#prefix' => '<div class="field-group-' . $group->format_type . '-wrapper ' . $group->classes . '">',
+      '#prefix' => '<div class="field-group-' . $this->group->format_type . '-wrapper ' . $this->group->classes . '">',
       '#suffix' => '</div>',
       '#tree' => TRUE,
-      '#parents' => array($group->group_name),
+      '#parents' => array($this->group->group_name),
       '#default_tab' => '',
     );
 
-    $form_state = new Drupal\Core\Form\FormState();
+    $form_state = new \Drupal\Core\Form\FormState();
 
     if ($this->getSetting('direction') == 'vertical') {
       $element += array(
         '#type' => 'vertical_tabs',
         '#theme_wrappers' => array('vertical_tabs'),
       );
-      $element = form_process_vertical_tabs($element, $form_state);
+      $complete_form = array();
+      $element = \Drupal\Core\Render\Element\VerticalTabs::processVerticalTabs($element, $form_state, $complete_form);
     }
     else {
       $element += array(
         '#type' => 'horizontal_tabs',
         '#theme_wrappers' => array('horizontal_tabs'),
       );
-      $element = form_process_vertical_tabs($element, $form_state);
+      $element = form_process_horizontal_tabs($element, $form_state);
     }
 
     // Make sure the group has 1 child. This is needed to succeed at form_pre_render_vertical_tabs().
