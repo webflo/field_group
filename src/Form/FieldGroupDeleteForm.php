@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains \Drupal\field_ui\Form\FieldInstanceConfigDeleteForm.
+ * Contains \Drupal\field_group\Form\FieldGroupDeleteForm.
  */
 
 namespace Drupal\field_group\Form;

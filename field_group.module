@@ -49,36 +49,7 @@ function field_group_theme() {
       'render element' => 'element',
       'template' => 'horizontal-tabs',
     ),
-    'multipage' => array(
-      'render element' => 'element',
-    ),
-    'multipage_pane' => array(
-      'render element' => 'element',
-    ),
   );
-}
-
-/**
- * Implements hook_element_info().
- */
-function field_group_element_info() {
-  $types['horizontal_tabs'] = array(
-    '#theme_wrappers' => array('horizontal_tabs'),
-    '#default_tab' => '',
-    '#process' => array('form_process_horizontal_tabs'),
-  );
-  $types['multipage'] = array(
-    '#theme_wrappers' => array('multipage'),
-    '#default_tab' => '',
-    '#process' => array('form_process_multipage'),
-  );
-  $types['multipage_pane'] = array(
-    '#value' => NULL,
-    '#process' => array('form_process_fieldset', 'ajax_process_form'),
-    '#pre_render' => array('form_pre_render_fieldset'),
-    '#theme_wrappers' => array('multipage_pane'),
-  );
-  return $types;
 }
 
 /**
@@ -235,61 +206,6 @@ function field_group_field_group_build_pre_render_alter(& $element) {
       unset($element['additional_settings']);
     }
   }
-
-}
-
-/**
- * Creates a group formatted as horizontal tabs.
- * This function will never be callable from within field_group rendering. Other
- * modules using #type horizontal_tabs will have the benefit of this processor.
- *
- * @param $element
- *   An associative array containing the properties and children of the
- *   fieldset.
- * @param $form_state
- *   The $form_state Object for the form this horizontal tab widget belongs to.
- * @return
- *   The processed element.
- */
-function form_process_horizontal_tabs($element, FormStateInterface $form_state, $on_form = TRUE) {
-
-  // Inject a new details as child, so that form_process_details() processes
-  // this details element like any other details.
-  $element['group'] = array(
-    '#type' => 'details',
-    '#theme_wrappers' => array(),
-    '#parents' => $element['#parents'],
-  );
-
-  // Add an invisible label for accessibility.
-  if (!isset($element['#title'])) {
-    $element['#title'] = t('Horizontal Tabs');
-    $element['#title_display'] = 'invisible';
-  }
-
-  // Add required JavaScript and Stylesheet.
-  $element['#attached']['library'][] = 'field_group/formatter.horizontal_tabs';
-
-  // Only add forms library on forms.
-  if ($on_form) {
-    $element['#attached']['library'][] = 'core/drupal.form';
-  }
-
-  // The JavaScript stores the currently selected tab in this hidden
-  // field so that the active tab can be restored the next time the
-  // form is rendered, e.g. on preview pages or when form validation
-  // fails.
-  $name = implode('__', $element['#parents']);
-  if ($form_state->hasValue($name . '__active_tab')){
-    $element['#default_tab'] = $form_state->getValue($name . '__active_tab');
-  }
-  $element[$name . '__active_tab'] = array(
-    '#type' => 'hidden',
-    '#default_value' => $element['#default_tab'],
-    '#attributes' => array('class' => array('horizontal-tabs-active-tab')),
-  );
-
-  return $element;
 
 }
 
