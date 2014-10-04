@@ -9,8 +9,6 @@ namespace Drupal\field_group\Form;
 
 use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpFoundation\Request;
 use Drupal\Core\Url;
 
 /**
@@ -27,10 +25,9 @@ class FieldGroupDeleteForm extends ConfirmFormBase {
 
   /**
    * Construct the delete form: get the group config out of the request.
-   * @param Request $request
    */
-  public function __construct(Request $request) {
-    $this->fieldGroup = (object)$request->attributes->get('field_group');
+  public function __construct() {
+    $this->fieldGroup = (object)$this->getRequest()->attributes->get('field_group');
   }
 
   /**
@@ -61,18 +58,8 @@ class FieldGroupDeleteForm extends ConfirmFormBase {
     drupal_set_message(t('The group %group has been deleted from the %type content type.', array('%group' => t($this->fieldGroup->label), '%type' => $bundle_label)));
 
     // Redirect.
-    $form_state['redirect_route'] = $this->getCancelRoute();
+    $form_state->setRedirectUrl($this->getCancelUrl());
 
-  }
-
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function create(ContainerInterface $container) {
-    return new static(
-      $container->get('request')
-    );
   }
 
   /**
@@ -96,7 +83,7 @@ class FieldGroupDeleteForm extends ConfirmFormBase {
 
     $entity_type_id = $this->fieldGroup->entity_type;
     $entity_type = \Drupal::entityManager()->getDefinition($entity_type_id);
-    if (!$entity_type->hasLinkTemplate('admin-form')) {
+    if (!$entity_type->get('field_ui_base_route')) {
       return;
     }
 
