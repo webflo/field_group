@@ -48,7 +48,7 @@ class Fieldset extends FieldGroupFormatterBase {
 
     if ($this->getSetting('classes')) {
       $element += array(
-        '#attributes' => array('class' => $this->getSetting('classes')),
+        '#attributes' => array('class' => explode(' ', $this->getSetting('classes'))),
       );
     }
   }

@@ -7,6 +7,7 @@
 
 namespace Drupal\field_group\Plugin\field_group\FieldGroupFormatter;
 
+use Drupal\Component\Utility\String;
 use Drupal\field_group\FieldGroupFormatterBase;
 
 /**
@@ -41,7 +42,7 @@ class Tab extends FieldGroupFormatterBase {
     );
 
     if ($this->getSetting('classes')) {
-      $add['#attributes'] = array('class' => $this->getSetting('classes'));
+      $element['#attributes']['class'] = explode(' ', $this->getSetting('classes'));
     }
 
     // Front-end and back-end on configuration will lead

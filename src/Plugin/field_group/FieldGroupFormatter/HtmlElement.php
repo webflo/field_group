@@ -7,6 +7,7 @@
 
 namespace Drupal\field_group\Plugin\field_group\FieldGroupFormatter;
 
+use Drupal\Component\Utility\String;
 use Drupal\field_group\FieldGroupFormatterBase;
 
 /**
@@ -28,6 +29,41 @@ class HtmlElement extends FieldGroupFormatterBase {
    * {@inheritdoc}
    */
   public function preRender(&$element) {
+
+    $element_attributes = new \Drupal\Core\Template\Attribute();
+
+    if ($this->getSetting('attributes')) {
+
+      // This regex split the attributes string so that we can pass that
+      // later to drupal_attributes().
+      preg_match_all('/([^\s=]+)="([^"]+)"/', $this->getSetting('attributes'), $matches);
+
+      // Put the attribute and the value together.
+      foreach ($matches[1] as $key => $attribute) {
+        $element_attributes[$attribute] = $matches[2][$key];
+      }
+
+    }
+
+    // Add the classes to the attributes array.
+    if ($this->getSetting('classes')) {
+
+      if (!isset($element_attributes['class'])) {
+        $element_attributes['class'] = array();
+      }
+
+      $element_attributes['class'][] = $this->getSetting('classes');
+
+    }
+
+    $element['#prefix'] = '<' . $this->getSetting('html_element') . $element_attributes . '>';
+    if ($this->getSetting('show_label')) {
+      $element['#prefix'] .= '<' . $this->getSetting('label_element') . '><span>';
+      $element['#prefix'] .= String::checkPlain(\Drupal::translation()->translate($group->label));
+      $element['#prefix'] .= '</span></' . $this->getSetting('label_element') . '>';
+    }
+    $element['#suffix'] = '</' . $this->getSetting('html_element') . '>';
+    print_r($element);die();
   }
 
   /**

@@ -30,6 +30,7 @@ class Details extends FieldGroupFormatterBase {
    * {@inheritdoc}
    */
   public function preRender(&$element) {
+
     $element += array(
       '#type' => 'details',
       '#title' => String::checkPlain(\Drupal::translation()->translate($this->getLabel())),
@@ -42,7 +43,7 @@ class Details extends FieldGroupFormatterBase {
 
     if ($this->getSetting('classes')) {
       $element += array(
-        '#attributes' => array('class' => $this->getSetting('classes')),
+        '#attributes' => array('class' => explode(' ', $this->getSetting('classes'))),
       );
     }
 

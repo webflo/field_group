@@ -43,11 +43,13 @@ class HorizontalTabs extends RenderElement {
    *   details element.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The current state of the form.
+   * @param bool $on_form
+   *   Are the tabs rendered on a form or not.
    *
    * @return array
    *   The processed element.
    */
-  public static function processHorizontalTabs(&$element, FormStateInterface $form_state) {
+  public static function processHorizontalTabs(&$element, FormStateInterface $form_state, $on_form = TRUE) {
 
     // Inject a new details as child, so that form_process_details() processes
     // this details element like any other details.

@@ -53,7 +53,8 @@ class Tabs extends FieldGroupFormatterBase {
         '#type' => 'horizontal_tabs',
         '#theme_wrappers' => array('horizontal_tabs'),
       );
-      $element = \Drupal\field_group\Element\HorizontalTabs::processHorizontalTabs($element, $form_state);
+      $on_form = $this->context == 'form';
+      $element = \Drupal\field_group\Element\HorizontalTabs::processHorizontalTabs($element, $form_state, $on_form);
     }
 
     // Make sure the group has 1 child. This is needed to succeed at form_pre_render_vertical_tabs().
