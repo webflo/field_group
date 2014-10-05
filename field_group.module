@@ -125,7 +125,9 @@ function field_group_form_alter(array &$form, FormStateInterface $form_state) {
 
     foreach ($form['#fieldgroups'] as $group) {
       foreach ($group->children as $children) {
-        $form[$children]['#group'] = $group->group_name;
+        // We should be able to work with group, and core takes care of
+        // everything. Instead, we call field_group_form_pre_render for now.
+        //$form[$children]['#group'] = $group->group_name;
       }
     }
 
@@ -138,6 +140,9 @@ function field_group_form_alter(array &$form, FormStateInterface $form_state) {
       $dummy = array();
       field_group_field_group_pre_render($form[$group_name], $group, $dummy);
     }
+
+    field_group_form_pre_render($form);
+
   }
 
 }
@@ -405,7 +410,6 @@ function field_group_fields_nest(&$element, &$vars = NULL) {
     }
     // Form being viewed
     else {
-
       // Block denied fields (#access) before they are put in groups.
       // Fields (not groups) that don't have children (like field_permissions) are removed
       // in field_group_field_group_build_pre_render_alter.
