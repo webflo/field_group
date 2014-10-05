@@ -9,6 +9,8 @@ use Drupal\Component\Utility\Xss;
 use Drupal\Component\Utility\String;
 use Drupal\Core\Render\Element;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Entity\ContentEntityFormInterface;
+use Drupal\Core\Entity\Entity\EntityFormDisplay;
 
 
 module_load_include('inc', 'field_group', 'includes/helpers');
@@ -86,20 +88,58 @@ function field_group_field_info_max_weight($entity_type, $bundle, $context, $con
 
 /**
  * Implements hook_field_attach_form().
+ *
+ * @todo Refactored in field_group_form_alter().
+ * Remove this function afterwards. Decision has to be made about using
+ * a pre_render callback or doing the nesting logic immediately in the alter.
  */
 function field_group_field_attach_form($entity_type, $entity, &$form, FormStateInterface $form_state, $langcode) {
-
   $form['#attached']['css'][] = drupal_get_path('module', 'field_group') . '/field_group.field_ui.css';
-
-  $context = array(
-    'entity_type' => $entity_type,
-    'bundle' => '',
-    'mode' => '',
-    'context' => 'form',
-  );
-
   field_group_attach_groups($form, 'form', $form_state);
   $form['#pre_render'][] = 'field_group_form_pre_render';
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function field_group_form_alter(array &$form, FormStateInterface $form_state) {
+
+  if ($form_state->getFormObject() instanceof ContentEntityFormInterface) {
+    $form['#attached']['css'][] = drupal_get_path('module', 'field_group') . '/field_group.field_ui.css';
+    /**
+     * @var EntityFormDisplayInterface $form_display
+     */
+    $form_display = $form_state->getStorage()['form_display'];
+    $entity = $form_state->getFormObject()->getEntity();
+
+    $context = array(
+      'entity_type' => $entity->getEntityTypeId(),
+      'bundle' => $entity->bundle(),
+      'entity' => $entity,
+      'context' => 'form',
+      'display_context' => 'form',
+      'mode' => $form_display->mode,
+    );
+
+    field_group_attach_groups($form, $context);
+
+    foreach ($form['#fieldgroups'] as $group) {
+      foreach ($group->children as $children) {
+        $form[$children]['#group'] = $group->group_name;
+      }
+    }
+
+    // Bring extra element wrappers to achieve a grouping of fields.
+    // This will mainly be prefix and suffix altering.
+    foreach ($form['#fieldgroups'] as $group_name => $group) {
+      if (!isset($form[$group_name])) {
+        $form[$group_name] = array();
+      }
+      $dummy = array();
+      field_group_field_group_pre_render($form[$group_name], $group, $dummy);
+    }
+  }
+
 }
 
 /**

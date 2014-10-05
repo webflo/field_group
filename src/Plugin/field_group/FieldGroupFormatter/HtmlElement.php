@@ -56,14 +56,13 @@ class HtmlElement extends FieldGroupFormatterBase {
 
     }
 
-    $element['#prefix'] = '<' . $this->getSetting('html_element') . $element_attributes . '>';
+    $element['#prefix'] = '<' . $this->getSetting('element') . $element_attributes . '>';
     if ($this->getSetting('show_label')) {
       $element['#prefix'] .= '<' . $this->getSetting('label_element') . '><span>';
       $element['#prefix'] .= String::checkPlain(\Drupal::translation()->translate($group->label));
       $element['#prefix'] .= '</span></' . $this->getSetting('label_element') . '>';
     }
-    $element['#suffix'] = '</' . $this->getSetting('html_element') . '>';
-    print_r($element);die();
+    $element['#suffix'] = '</' . $this->getSetting('element') . '>';
   }
 
   /**
