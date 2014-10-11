@@ -7,11 +7,11 @@
 
 use Drupal\Component\Utility\Xss;
 use Drupal\Component\Utility\String;
-use Drupal\Core\Entity\Entity\EntityViewDisplay;
 use Drupal\Core\Render\Element;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Entity\ContentEntityFormInterface;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
+
 
 module_load_include('inc', 'field_group', 'includes/helpers');
 
@@ -492,23 +492,21 @@ function field_group_pre_render_prepare(&$group) {
  * @param $group
  *   A group definition.
  */
-function field_group_group_save(&$group) {
-  if ($group->context == 'form') {
-    $display = EntityFormDisplay::load($group->entity_type . '.' . $group->bundle . '.' . $group->mode);
+function field_group_group_save(& $group) {
+
+  $config = Drupal::config(_field_group_get_config_name($group));
+
+  // Group is new.
+  if ($config->isNew()) {
+    Drupal::moduleHandler()->invokeAll('field_group_create_field_group', array($group));
   }
-  if ($group->context == 'view') {
-    $display = EntityViewDisplay::load($group->entity_type . '.' . $group->bundle . '.' . $group->mode);
+  // Existing group.
+  else {
+    Drupal::moduleHandler()->invokeAll('field_group_update_field_group', array($group));
   }
 
-  /**
-   * @var $display \Drupal\Core\Entity\Display\EntityDisplayInterface
-   */
-  if (isset($display)) {
-    $data = (array) $group;
-    unset($data['group_name'], $data['entity_type'], $data['bundle'], $data['mode'], $data['form'], $data['context']);
-    $display->setThirdPartySetting('field_group', $group->group_name, $data);
-    $display->save();
-  }
+  return $config->setData((array)$group)->save();
+
 }
 
 /**
@@ -518,21 +516,7 @@ function field_group_group_save(&$group) {
  *   A group definition.
  */
 function field_group_group_delete($group) {
-  if ($group->context == 'form') {
-    $display = EntityFormDisplay::load($group->entity_type . '.' . $group->bundle . '.' . $group->mode);
-  }
-  if ($group->context = 'view') {
-    $display = EntityViewDisplay::load($group->entity_type . '.' . $group->bundle . '.' . $group->mode);
-  }
-
-  /**
-   * @var $display \Drupal\Core\Entity\Display\EntityDisplayInterface
-   */
-  if (isset($display)) {
-    $display->unsetThirdPartySetting('field_group', $group->group_name);
-    $display->save();
-  }
-
+  Drupal::config(_field_group_get_config_name($group))->delete();
   Drupal::moduleHandler()->invokeAll('field_group_delete_field_group', array($group));
 }
 
@@ -547,31 +531,46 @@ function field_group_group_delete($group) {
  *   The context of the view mode (form or view)
  * @param $mode
  *   The view mode.
+ * @param $reset.
+ *   Whether to reset the cache or not.
  */
-function field_group_info_groups($entity_type, $bundle, $context, $mode) {
-  if ($context == 'form') {
-    $display = EntityFormDisplay::load($entity_type . '.' . $bundle . '.' . $mode);
-    $data = $display->getThirdPartySettings('field_group');
-  }
-  if ($context == 'view') {
-    $display = EntityViewDisplay::load($entity_type . '.' . $bundle . '.' . $mode);
-    $data = $display->getThirdPartySettings('field_group');
-  }
+function field_group_info_groups($entity_type = NULL, $bundle = NULL, $context = NULL, $mode = NULL, $reset = FALSE) {
 
-  $groups = array();
-  if (isset($data)) {
-    foreach ($data as $group_name => $definition) {
-      $definition += array(
-        'group_name' => $group_name,
-        'entity_type' => $entity_type,
-        'bundle' => $bundle,
-        'context' => $context,
-        'mode' => $mode,
-      );
-      $groups[$group_name] = (object) $definition;
+  static $groups = NULL;
+
+  if (!isset($groups) || $reset) {
+    if (!$reset && $cache = Drupal::cache()->get('field_groups')) {
+      $groups = $cache->data;
+    }
+    else {
+      $field_group_configs = Drupal::configFactory()->listAll('field_group.');
+      foreach ($field_group_configs as $config_name) {
+        $group = (object)Drupal::config($config_name)->get();
+        $groups[$group->entity_type][$group->bundle][$group->context][$group->mode][$group->group_name] = $group;
+      }
+      Drupal::cache()->set('field_groups', $groups);
     }
   }
-  return $groups;
+
+  Drupal::moduleHandler()->alter('field_group_info', $groups);
+
+  if (!isset($entity_type)) {
+    return $groups;
+  }
+  elseif (!isset($bundle) && isset($groups[$entity_type])) {
+    return $groups[$entity_type];
+  }
+  elseif (!isset($context) && isset($groups[$entity_type][$bundle])) {
+    return $groups[$entity_type][$bundle];
+  }
+  elseif (!isset($mode) && isset($groups[$entity_type][$bundle][$context])) {
+    return $groups[$entity_type][$bundle][$context];
+  }
+  elseif (isset($groups[$entity_type][$bundle][$context][$mode])) {
+    return $groups[$entity_type][$bundle][$context][$mode];
+  }
+  return array();
+
 }
 
 /**
@@ -589,10 +588,7 @@ function field_group_info_groups($entity_type, $bundle, $context, $mode) {
  *   The view mode to load.
  */
 function field_group_load_field_group($group_name, $entity_type, $bundle, $context, $mode) {
-  $groups = field_group_info_groups($entity_type, $bundle, $context, $mode);
-  if (isset($groups[$group_name])) {
-    return $groups[$group_name];
-  }
+  return (object)Drupal::config('field_group.' . $entity_type . '.' . $bundle . '.' . $context . '.' . $mode . '.' . $group_name)->get();
 }
 
 /**
@@ -610,7 +606,8 @@ function field_group_load_field_group($group_name, $entity_type, $bundle, $conte
  *   The view mode context the group will be rendered.
  */
 function field_group_exists($group_name, $entity_type, $bundle, $context, $mode) {
-  return (bool) field_group_load_field_group($group_name, $entity_type, $bundle, $context, $mode);
+  $config = Drupal::config('field_group.' . $entity_type . '.' . $bundle . '.' . $context . '.' . $mode . $group_name);
+  return !$config->isNew();
 }
 
 /**

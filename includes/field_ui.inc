@@ -644,6 +644,7 @@ function field_group_field_overview_submit($form, FormStateInterface $form_state
  * @param Object $group The FieldGroup object.
  */
 function field_group_format_settings_form(&$group, $form, $form_state) {
+
   $manager = \Drupal::service('plugin.manager.field_group.formatters');
   $plugin = $manager->getInstance(array(
     'format_type' => $group->format_type,
@@ -652,6 +653,7 @@ function field_group_format_settings_form(&$group, $form, $form_state) {
   ));
 
   return $plugin->settingsForm($form, $form_state);
+
 }
 
 /**
