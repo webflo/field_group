@@ -82,10 +82,3 @@ function _field_group_get_default_formatter_settings($format_type) {
   $manager = \Drupal::service('plugin.manager.field_group.formatters');
   return $manager->getDefaultSettings($format_type);
 }
-
-/**
- * Get the config filename for a given group.
- */
-function _field_group_get_config_name($group) {
-  return 'field_group.' . $group->entity_type . '.' . $group->bundle . '.' . $group->context . '.' . $group->mode . '.' . $group->group_name;
-}
