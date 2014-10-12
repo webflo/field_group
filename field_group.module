@@ -551,10 +551,16 @@ function field_group_group_delete($group) {
 function field_group_info_groups($entity_type, $bundle, $context, $mode) {
   if ($context == 'form') {
     $display = EntityFormDisplay::load($entity_type . '.' . $bundle . '.' . $mode);
+    if (!$display) {
+      return array();
+    }
     $data = $display->getThirdPartySettings('field_group');
   }
   if ($context == 'view') {
     $display = EntityViewDisplay::load($entity_type . '.' . $bundle . '.' . $mode);
+    if (!$display) {
+      return array();
+    }
     $data = $display->getThirdPartySettings('field_group');
   }
 

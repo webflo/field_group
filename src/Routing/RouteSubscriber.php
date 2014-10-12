@@ -55,11 +55,12 @@ class RouteSubscriber extends RouteSubscriberBase {
           $options['parameters'][$entity_type->getBundleEntityType()] = array(
             'type' => 'entity:' . $entity_type->getBundleEntityType(),
           );
-          $options['parameters']['field_group'] = array(
-            'type' => 'field_group',
-            'entity_type' => $entity_type->getBundleEntityType(),
-          );
         }
+
+        $options['parameters']['field_group'] = array(
+          'type' => 'field_group',
+          'entity_type' => $entity_type->getBundleEntityType(),
+        );
 
         $route = new Route(
           "$path/groups/{field_group}/delete",
