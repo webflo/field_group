@@ -123,25 +123,7 @@ function field_group_form_alter(array &$form, FormStateInterface $form_state) {
 
     field_group_attach_groups($form, $context);
 
-    foreach ($form['#fieldgroups'] as $group) {
-      foreach ($group->children as $children) {
-        // We should be able to work with group, and core takes care of
-        // everything. Instead, we call field_group_form_pre_render for now.
-        //$form[$children]['#group'] = $group->group_name;
-      }
-    }
-
-    // Bring extra element wrappers to achieve a grouping of fields.
-    // This will mainly be prefix and suffix altering.
-    foreach ($form['#fieldgroups'] as $group_name => $group) {
-      if (!isset($form[$group_name])) {
-        $form[$group_name] = array();
-      }
-      $dummy = array();
-      field_group_field_group_pre_render($form[$group_name], $group, $dummy);
-    }
-
-    field_group_form_pre_render($form);
+    $form['#pre_render'][] = 'field_group_form_pre_render';
 
   }
 
@@ -228,14 +210,14 @@ function field_group_field_group_build_pre_render_alter(& $element) {
   }
   else {
     // Fix the problem on forms with additional settings.
-    field_group_remove_empty_form_groups('form', $element, $groups, $element['#groups'], $element['#entity_type']);
+    field_group_remove_empty_form_groups('form', $element, $groups, $element['#fieldgroups'], $element['#entity_type']);
   }
 
   // Move additional settings to the last multipage pane if configured that way.
   // Note that multipages MUST be in the root of the form.
   foreach (element_children($element) as $name) {
     if (isset($element[$name]['#type']) && $element[$name]['#type'] == 'multipage' && isset($element['additional_settings'])) {
-      $parent_group = $element['#groups'][$name];
+      $parent_group = $element['#fieldgroups'][$name];
       $move_additional = isset($parent_group->format_settings['instance_settings']['move_additional']) ? $parent_group->format_settings['instance_settings']['move_additional'] : 1;
       $last_pane = NULL;
       foreach (element_children($element[$name], TRUE) as $pane) {
@@ -282,8 +264,7 @@ function field_group_attach_groups(&$element, $context) {
   $mode = $context['mode'];
   $display_context = $context['context'];
 
-  $element['#groups'] = field_group_info_groups($entity_type, $bundle, $display_context, $mode);
-  $element['#fieldgroups'] = $element['#groups'];
+  $element['#fieldgroups'] = field_group_info_groups($entity_type, $bundle, $display_context, $mode);
 
   // Create a lookup array.
   $group_children = array();
@@ -293,6 +274,7 @@ function field_group_attach_groups(&$element, $context) {
     }
   }
   $element['#group_children'] = $group_children;
+  $element['#entity_type'] = $entity_type;
 
 }
 
@@ -650,7 +632,7 @@ function field_group_remove_empty_form_groups($name, & $element, $groups, &$form
 
   if (!$hasChildren) {
 
-    // Remove empty elements from the #groups.
+    // Remove empty elements from the #fieldgroups.
     if (empty($element) && isset($form_groups[$name]) && !is_array($form_groups[$name])) {
       foreach ($form_groups as $group_name => $group) {
         if (isset($group->children)) {

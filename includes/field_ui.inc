@@ -56,7 +56,7 @@ function field_group_field_ui_display_form_alter(&$form, FormStateInterface $for
   }
 
   $params = field_group_field_ui_form_params($form, $context);
-  $form['#groups'] = array_keys($params->groups);
+  $form['#fieldgroups'] = array_keys($params->groups);
   $form['#context'] = $context;
 
   $table = &$form['fields'];
@@ -92,7 +92,7 @@ function field_group_field_ui_display_form_alter(&$form, FormStateInterface $for
 
   $refresh_rows = isset($form_state_values['refresh_rows']) ? $form_state_values['refresh_rows'] : (isset($form_state->getUserInput()['refresh_rows']) ? $form_state->getUserInput()['refresh_rows'] : NULL);
   // Create the group rows and check actions.
-  foreach ($form['#groups'] as $name) {
+  foreach ($form['#fieldgroups'] as $name) {
 
     // Play around with form_sxtate so we only need to hold things
     // between requests, until the save button was hit.
@@ -293,7 +293,7 @@ function field_group_field_ui_display_form_alter(&$form, FormStateInterface $for
   field_group_field_ui_create_vertical_tabs($form, $form_state, $params);
 
   // Show a warning if the user has not set up required containers
-  if ($form['#groups']) {
+  if ($form['#fieldgroups']) {
 
     $parent_requirements = array(
       'multipage' => array(
@@ -314,7 +314,7 @@ function field_group_field_ui_display_form_alter(&$form, FormStateInterface $for
       );
     }
 
-    foreach ($form['#groups'] as $group_name) {
+    foreach ($form['#fieldgroups'] as $group_name) {
       $group_check = field_group_load_field_group($group_name, $params->entity_type, $params->bundle, $params->context, $params->mode);
       if (isset($parent_requirements[$group_check->format_type])) {
         if (!$group_check->parent_name || field_group_load_field_group($group_check->parent_name, $params->entity_type, $params->bundle, $params->context, $params->mode)->format_type != $parent_requirements[$group_check->format_type]['parent']) {
@@ -549,7 +549,7 @@ function field_group_field_overview_submit($form, FormStateInterface $form_state
   $context = $form['#context'];
 
   // Collect children.
-  $children = array_fill_keys($form['#groups'], array());
+  $children = array_fill_keys($form['#fieldgroups'], array());
   foreach ($form_values as $name => $value) {
     if (!empty($value['parent'])) {
       // Substitute newly added fields, in case they were dragged
@@ -607,7 +607,7 @@ function field_group_field_overview_submit($form, FormStateInterface $form_state
   $groups = field_group_info_groups($entity_type, $bundle, $context, $mode, TRUE);
   $field_group_form_state = $form_state->get('field_group');
   if (!empty($field_group_form_state)) {
-    foreach ($form['#groups'] as $group_name) {
+    foreach ($form['#fieldgroups'] as $group_name) {
 
       // Only save updated groups.
       if (!isset($field_group_form_state[$group_name])) {
