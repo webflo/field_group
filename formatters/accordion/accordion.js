@@ -9,7 +9,7 @@ Drupal.FieldGroup.Effects.processAccordion = {
       var wrapper = $(this);
 
       wrapper.accordion({
-        autoHeight: false,
+        heightStyle: "content",
         active: '.field-group-accordion-active',
         collapsible: true,
         changestart: function(event, ui) {
