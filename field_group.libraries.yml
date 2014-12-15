@@ -1,3 +1,16 @@
+field_ui:
+  version: VERSION
+  js:
+    js/field_group.field_ui.js: {}
+  css:
+    components:
+      field_group.field_ui.css: {}
+  dependencies:
+    - core/jquery
+    - core/jquery.once
+    - core/drupal
+    - core/drupalSettings
+
 core:
     version: VERSION
     js:

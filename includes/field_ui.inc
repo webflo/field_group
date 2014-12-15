@@ -284,8 +284,7 @@ function field_group_field_ui_display_form_alter(&$form, FormStateInterface $for
     ),
   );
 
-  $form['#attached']['css'][] = drupal_get_path('module', 'field_group') . '/css/field_group.field_ui.css';
-  $form['#attached']['js'][] = drupal_get_path('module', 'field_group') . '/js/field_group.field_ui.js';
+  $form['#attached']['library'][] = 'field_group/field_ui';
 
   $form['#validate'][] = 'field_group_field_overview_validate';
   $form['#submit'][] = 'field_group_field_overview_submit';
