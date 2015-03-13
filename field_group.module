@@ -58,9 +58,9 @@ function field_group_theme() {
  * Implements hook_form_FORM_ID_alter().
  * Using hook_form_field_ui_form_display_overview_form_alter.
  */
-function field_group_form_field_ui_form_display_overview_form_alter(&$form, FormStateInterface $form_state) {
+function field_group_form_entity_form_display_edit_form_alter(&$form, FormStateInterface $form_state) {
   $form_state->loadInclude('field_group', 'inc', 'includes/field_ui');
-  field_group_field_ui_display_form_alter($form, $form_state, 'form');
+  field_group_field_ui_display_form_alter($form, $form_state);
 }
 
 /**
@@ -69,7 +69,7 @@ function field_group_form_field_ui_form_display_overview_form_alter(&$form, Form
  */
 function field_group_form_field_ui_display_overview_form_alter(&$form, FormStateInterface $form_state) {
   $form_state->loadInclude('field_group', 'inc', 'includes/field_ui');
-  field_group_field_ui_display_form_alter($form, $form_state, 'view');
+  field_group_field_ui_display_form_alter($form, $form_state);
 }
 
 /**

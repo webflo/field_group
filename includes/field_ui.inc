@@ -12,28 +12,34 @@ use Drupal\Core\Render\Element;
 use Drupal\Core\Url;
 Use Drupal\Core\Link;
 use Drupal\Component\Utility\String;
+use Drupal\field_ui\Form\EntityDisplayFormBase;
 
 /**
  * Helper function to get the form parameters to use while
  * building the fields and display overview form.
+ *
+ * @param $form
+ *
+ * @param \Drupal\Core\Entity\EntityDisplayBase $display
+ *
+ * @return \stdClass
  */
-function field_group_field_ui_form_params($form, $context) {
-
+function field_group_field_ui_form_params($form, \Drupal\Core\Entity\EntityDisplayBase $display) {
   $entity_type_definition = \Drupal::entityManager()->getDefinition($form['#entity_type']);
   $admin_url = new Url($entity_type_definition->get('field_ui_base_route'), array(
     $entity_type_definition->getBundleEntityType() => $form['#bundle'],
   ));
 
   $params = new stdClass();
-  $params->entity_type = $form['#entity_type'];
-  $params->bundle = $form['#bundle'];
+  $params->entity_type = $display->targetEntityType;
+  $params->bundle = $display->bundle;
   $params->admin_path = $admin_url->toString();
   $params->region_callback = 'field_group_display_overview_row_region';
-  $params->mode = $form['#mode'];
-  $params->context = $context;
+  $params->mode = $display->mode;
+  $params->context = field_group_get_context_from_display($display);
 
   $params->groups = array();
-  $params->groups = field_group_info_groups($params->entity_type, $params->bundle, $params->context, $params->mode, TRUE);
+  $params->groups = field_group_info_groups($params->entity_type, $params->bundle, $params->context, $params->mode);
 
   // Gather parenting data.
   $params->parents = array();
@@ -47,18 +53,42 @@ function field_group_field_ui_form_params($form, $context) {
 }
 
 /**
+ * Helper function to get context from entity display.
+ *
+ * @param \Drupal\Core\Entity\EntityDisplayBase $display
+ *
+ * @return string
+ */
+function field_group_get_context_from_display(\Drupal\Core\Entity\EntityDisplayBase $display) {
+  if ($display instanceof \Drupal\Core\Entity\Display\EntityFormDisplayInterface) {
+    return 'form';
+  }
+  elseif ($display instanceof \Drupal\Core\Entity\Display\EntityViewDisplayInterface) {
+    return 'view';
+  }
+
+  throw new LogicException('Unknown display object.');
+}
+
+/**
  * Function to alter the display overview screens.
  */
-function field_group_field_ui_display_form_alter(&$form, FormStateInterface $form_state, $context) {
-
+function field_group_field_ui_display_form_alter(&$form, FormStateInterface $form_state) {
   // Only start altering the form if we need to.
   if (empty($form['#fields']) && empty($form['#extra'])) {
     return;
   }
 
-  $params = field_group_field_ui_form_params($form, $context);
+  $callback_object = $form_state->getBuildInfo()['callback_object'];
+  if (!$callback_object instanceof EntityDisplayFormBase) {
+    throw new InvalidArgumentException('Unkown callback object.');
+  }
+
+  $display = $callback_object->getEntity();
+
+  $params = field_group_field_ui_form_params($form, $display);
   $form['#fieldgroups'] = array_keys($params->groups);
-  $form['#context'] = $context;
+  $form['#context'] = $display;
 
   $table = &$form['fields'];
   $form_state_values = $form_state->getValues();
@@ -89,7 +119,7 @@ function field_group_field_ui_display_form_alter(&$form, FormStateInterface $for
     }
   }
 
-  $formatter_options = field_group_field_formatter_options($context);
+  $formatter_options = field_group_field_formatter_options($params->context);
 
   $refresh_rows = isset($form_state_values['refresh_rows']) ? $form_state_values['refresh_rows'] : (isset($form_state->getUserInput()['refresh_rows']) ? $form_state->getUserInput()['refresh_rows'] : NULL);
   // Create the group rows and check actions.
@@ -307,7 +337,7 @@ function field_group_field_ui_display_form_alter(&$form, FormStateInterface $for
     );
 
     // On display overview tabs need to be checked.
-    if ($context == 'view') {
+    if (field_group_get_context_from_display($display) == 'view') {
       $parent_requirements['tab'] = array(
         'parent' => 'tabs',
         'message' => 'Each tab element needs to have a parent tabs group element.',
@@ -494,10 +524,10 @@ function field_group_display_overview_row_region($row) {
  */
 function field_group_field_overview_validate($form, FormStateInterface $form_state) {
   $form_values = $form_state->getValue('fields');
-  $entity_type = $form['#entity_type'];
-  $bundle = $form['#bundle'];
-  $context = $form['#context'];
-  $mode = $form['#mode'];
+  $entity_type = $form['#context']->get('targetEntityType');
+  $bundle = $form['#context']->get('bundle');
+  $context = field_group_get_context_from_display($form['#context']);
+  $mode = $form['#context']->get('mode');
 
   $group = $form_values['_add_new_group'];
 
@@ -506,7 +536,7 @@ function field_group_field_overview_validate($form, FormStateInterface $form_sta
 
     // Missing group name.
     if (!$group['group_name']) {
-      form_set_error('fields][_add_new_group][group_name', t('Add new group: you need to provide a group name.'));
+      $form_state->setErrorByName('fields][_add_new_group][group_name', t('Add new group: you need to provide a group name.'));
     }
     // Group name validation.
     else {
@@ -515,20 +545,20 @@ function field_group_field_overview_validate($form, FormStateInterface $form_sta
       // Add the 'group_' prefix.
       if (Unicode::substr($group_name, 0, 6) != 'group_') {
         $group_name = 'group_' . $group_name;
-        form_set_value($form['fields']['_add_new_group']['group_name'], $group_name, $form_state);
+        $form_state->setError($form['fields']['_add_new_group']['group_name'], $group_name);
       }
 
       // Invalid group name.
       if (!preg_match('!^group_[a-z0-9_]+$!', $group_name)) {
-        \Drupal::formBuilder()->setErrorByName('fields][_add_new_group][group_name', $form_state, t('Add new group: the group name %group_name is invalid. The name must include only lowercase unaccentuated letters, numbers, and underscores.', array('%group_name' => $group_name)));
+        $form_state->setErrorByName('fields][_add_new_group][group_name', t('Add new group: the group name %group_name is invalid. The name must include only lowercase unaccentuated letters, numbers, and underscores.', array('%group_name' => $group_name)));
       }
       if (Unicode::strlen($group_name) > 32) {
-        \Drupal::formBuilder()->setErrorByName('fields][_add_new_group][group_name', $form_state, t("Add new group: the group name %group_name is too long. The name is limited to 32 characters, including the 'group_' prefix.", array('%group_name' => $group_name)));
+        $form_state->setErrorByName('fields][_add_new_group][group_name', t("Add new group: the group name %group_name is too long. The name is limited to 32 characters, including the 'group_' prefix.", array('%group_name' => $group_name)));
       }
 
       // Group name already exists.
       if (field_group_exists($group_name, $entity_type, $bundle, $context, $mode)) {
-        \Drupal::formBuilder()->setErrorByName('fields][_add_new_group][group_name', $form_state, t('Add new group: the group name %group_name already exists.', array('%group_name' => $group_name)));
+        $form_state->setErrorByName('fields][_add_new_group][group_name', t('Add new group: the group name %group_name already exists.', array('%group_name' => $group_name)));
       }
     }
   }
