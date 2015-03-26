@@ -317,7 +317,7 @@ function field_group_field_ui_display_form_alter(&$form, FormStateInterface $for
   $form['#attached']['library'][] = 'field_group/field_ui';
 
   $form['#validate'][] = 'field_group_field_overview_validate';
-  $form['#submit'][] = 'field_group_field_overview_submit';
+  $form['actions']['submit']['#submit'][] = 'field_group_field_overview_submit';
 
   // Create the settings for fieldgroup as vertical tabs (merged with DS).
   field_group_field_ui_create_vertical_tabs($form, $form_state, $params);
