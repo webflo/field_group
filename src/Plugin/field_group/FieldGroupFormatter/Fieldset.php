@@ -29,11 +29,11 @@ class Fieldset extends FieldGroupFormatterBase {
    * {@inheritdoc}
    */
   public function preRender(&$element) {
-
     $element += array(
       '#type' => 'fieldset',
       '#title' => String::checkPlain(\Drupal::translation()->translate($this->getLabel())),
       '#pre_render' => array(),
+      '#attributes' => array(),
     );
 
     if ($this->getSetting('description')) {
