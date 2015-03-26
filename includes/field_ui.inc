@@ -570,13 +570,18 @@ function field_group_field_overview_validate($form, FormStateInterface $form_sta
  * @param FormStateInterface $form_state The state of the form.
  */
 function field_group_field_overview_submit($form, FormStateInterface $form_state) {
-
   $form_values = $form_state->getValue('fields');
   $fields_added = $form_state->getValue('fields_added');
-  $entity_type = $form['#entity_type'];
-  $bundle = $form['#bundle'];
-  $mode = $form['#mode'];
-  $context = $form['#context'];
+
+  /**
+   * @var \Drupal\Core\Entity\EntityDisplayBase $display
+   */
+  $display = $form['#context'];
+
+  $entity_type = $display->get('targetEntityType');
+  $bundle = $display->get('bundle');
+  $mode = $display->get('mode');
+  $context = field_group_get_context_from_display($display);
 
   // Collect children.
   $children = array_fill_keys($form['#fieldgroups'], array());
