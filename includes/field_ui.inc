@@ -270,7 +270,7 @@ function field_group_field_ui_display_form_alter(&$form, FormStateInterface $for
       $table[$name]['settings_edit'] = $base_button + array(
         '#type' => 'image_button',
         '#name' => $name . '_group_settings_edit',
-        '#src' => 'core/misc/configure-dark.png',
+        '#src' => 'core/misc/icons/787878/cog.svg',
         '#attributes' => array('class' => array('field-plugin-settings-edit'), 'alt' => t('Edit')),
         '#op' => 'edit',
             // Do not check errors for the 'Edit' button, but make sure we get

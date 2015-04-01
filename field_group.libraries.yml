@@ -3,8 +3,8 @@ field_ui:
   js:
     js/field_group.field_ui.js: {}
   css:
-    components:
-      field_group.field_ui.css: {}
+    component:
+      css/field_group.field_ui.css: {}
   dependencies:
     - core/jquery
     - core/jquery.once
