@@ -545,7 +545,7 @@ function field_group_field_overview_validate($form, FormStateInterface $form_sta
       // Add the 'group_' prefix.
       if (Unicode::substr($group_name, 0, 6) != 'group_') {
         $group_name = 'group_' . $group_name;
-        $form_state->setError($form['fields']['_add_new_group']['group_name'], $group_name);
+        //$form_state->setError($form['fields']['_add_new_group']['group_name'], $group_name);
       }
 
       // Invalid group name.

@@ -436,7 +436,7 @@ function field_group_pre_render(& $element, $group, & $rendering_object) {
 
   // Let modules define their wrapping element.
   // Note that the group element has no properties, only elements.
-  foreach (module_implements('field_group_pre_render') as $module) {
+  foreach (Drupal::moduleHandler()->getImplementations('field_group_pre_render') as $module) {
     // The intention here is to have the opportunity to alter the
     // elements, as defined in hook_field_group_formatter_info.
     // Note, implement $element by reference!
