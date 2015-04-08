@@ -31,11 +31,11 @@ function field_group_field_ui_form_params($form, \Drupal\Core\Entity\EntityDispl
   ));
 
   $params = new stdClass();
-  $params->entity_type = $display->targetEntityType;
-  $params->bundle = $display->bundle;
+  $params->entity_type = $display->getTargetEntityTypeId();
+  $params->bundle = $display->getTargetBundle();
   $params->admin_path = $admin_url->toString();
   $params->region_callback = 'field_group_display_overview_row_region';
-  $params->mode = $display->mode;
+  $params->mode = $display->getMode();
   $params->context = field_group_get_context_from_display($display);
 
   $params->groups = array();
@@ -545,7 +545,7 @@ function field_group_field_overview_validate($form, FormStateInterface $form_sta
       // Add the 'group_' prefix.
       if (Unicode::substr($group_name, 0, 6) != 'group_') {
         $group_name = 'group_' . $group_name;
-        $form_state->setError($form['fields']['_add_new_group']['group_name'], $group_name);
+        //$form_state->setError($form['fields']['_add_new_group']['group_name'], $group_name);
       }
 
       // Invalid group name.
