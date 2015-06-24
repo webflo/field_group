@@ -131,9 +131,9 @@ function field_group_form_alter(array &$form, FormStateInterface $form_state) {
  */
 function field_group_entity_display_build_alter(&$element, $context) {
 
-  $context['entity_type'] = $context['display']->targetEntityType;
-  $context['bundle'] = $context['display']->bundle;
-  $context['mode'] = $context['display']->mode;
+  $context['entity_type'] = $context['display']->getTargetEntityTypeId();
+  $context['bundle'] = $context['display']->bundle();
+  $context['mode'] = $context['display']->getMode();
   $context['context'] = 'view';
 
   field_group_attach_groups($element, $context);
