@@ -132,7 +132,7 @@ function field_group_form_alter(array &$form, FormStateInterface $form_state) {
 function field_group_entity_display_build_alter(&$element, $context) {
 
   $context['entity_type'] = $context['display']->getTargetEntityTypeId();
-  $context['bundle'] = $context['display']->bundle();
+  $context['bundle'] = $context['display']->getTargetBundle();
   $context['mode'] = $context['display']->getMode();
   $context['context'] = 'view';
 
