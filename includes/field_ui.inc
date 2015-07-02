@@ -11,7 +11,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Element;
 use Drupal\Core\Url;
 Use Drupal\Core\Link;
-use \Drupal\Component\Utility\SafeMarkup;
+use Drupal\Component\Utility\SafeMarkup;
 use Drupal\field_ui\Form\EntityDisplayFormBase;
 
 /**
