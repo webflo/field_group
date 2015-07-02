@@ -11,7 +11,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Element;
 use Drupal\Core\Url;
 Use Drupal\Core\Link;
-use Drupal\Component\Utility\String;
+use \Drupal\Component\Utility\SafeMarkup;
 use Drupal\field_ui\Form\EntityDisplayFormBase;
 
 /**
@@ -167,7 +167,7 @@ function field_group_field_ui_display_form_alter(&$form, FormStateInterface $for
       '#region_callback' => $params->region_callback,
       '#js_settings' => array('rowHandler' => 'group'),
       'human_name' => array(
-        '#markup' => String::checkPlain(t($group->label)),
+        '#markup' => SafeMarkup::checkPlain(t($group->label)),
         '#prefix' => '<span class="group-label">',
         '#suffix' => '</span>',
       ),
