@@ -5,7 +5,7 @@
  * Helper functions for the fieldgroup module.
  */
 
-use Drupal\Component\Utility\String;
+use Drupal\Component\Utility\SafeMarkup;
 
 /**
  * Calculates html classes for a group.
@@ -47,7 +47,7 @@ function _field_group_get_html_classes(&$group) {
 
   // Add user selected classes.
   if (!empty($group->format_settings['classes'])) {
-    $required[] = String::checkPlain($group->format_settings['classes']);
+    $required[] = SafeMarkup::checkPlain($group->format_settings['classes']);
   }
 
   // Extra required classes for div.
