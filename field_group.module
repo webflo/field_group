@@ -6,7 +6,7 @@
  */
 
 use Drupal\Component\Utility\Xss;
-use Drupal\Component\Utility\String;
+use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Core\Entity\Entity\EntityViewDisplay;
 use Drupal\Core\Render\Element;
 use Drupal\Core\Form\FormStateInterface;
@@ -714,7 +714,7 @@ function field_group_pre_render_div(&$element, $group, &$rendering_object) {
   if ($group->format_settings['formatter'] != 'open') {
 
     $element['#prefix'] = '<div' . $id . ' class="' . $group->classes . '">
-      <' . $label_element . '><span class="field-group-format-toggler">' . String::checkPlain(t($group->label)) . '</span></' . $label_element . '>
+      <' . $label_element . '><span class="field-group-format-toggler">' . SafeMarkup::checkPlain(t($group->label)) . '</span></' . $label_element . '>
       <div class="field-group-format-wrapper" style="display: ' . (!empty($group->collapsed) ? 'none' : 'block') . ';">';
     $element['#suffix'] = '</div></div>';
 
@@ -730,7 +730,7 @@ function field_group_pre_render_div(&$element, $group, &$rendering_object) {
 
     $element['#prefix'] = '<div' . $id . $class_attribute . '>';
     if ($show_label) {
-      $element['#prefix'] .= '<' . $label_element . '><span>' . String::checkPlain(t($group->label)) . '</span></' . $label_element . '>';
+      $element['#prefix'] .= '<' . $label_element . '><span>' . SafeMarkup::checkPlain(t($group->label)) . '</span></' . $label_element . '>';
     }
     $element['#suffix'] = '</div>';
   }

@@ -7,7 +7,7 @@
 
 namespace Drupal\field_group\Plugin\field_group\FieldGroupFormatter;
 
-use Drupal\Component\Utility\String;
+use Drupal\Component\Utility\SafeMarkup;
 use Drupal\field_group\FieldGroupFormatterBase;
 
 /**
@@ -40,7 +40,7 @@ class AccordionItem extends FieldGroupFormatterBase {
     $element += array(
       '#type' => 'markup',
       '#prefix' => '<h3 class="field-group-format-toggler accordion-item' . $active_class . '">
-        <a href="#">' . String::checkPlain(\Drupal::translation()->translate($this->getLabel())) . '</a></h3>
+        <a href="#">' . SafeMarkup::checkPlain(\Drupal::translation()->translate($this->getLabel())) . '</a></h3>
         <div class="field-group-format-wrapper' . $extra_classes . '">',
       '#suffix' => '</div>',
     );

@@ -7,7 +7,7 @@
 
 namespace Drupal\field_group\Plugin\field_group\FieldGroupFormatter;
 
-use Drupal\Component\Utility\String;
+use Drupal\Component\Utility\SafeMarkup;
 use Drupal\field_group\FieldGroupFormatterBase;
 
 /**
@@ -64,7 +64,7 @@ class Tabs extends FieldGroupFormatterBase {
 
     // By default tabs don't have titles but you can override it in the theme.
     if ($this->getLabel()) {
-      $element['#title'] = String::checkPlain($this->getLabel());
+      $element['#title'] = SafeMarkup::checkPlain($this->getLabel());
     }
 
   }
