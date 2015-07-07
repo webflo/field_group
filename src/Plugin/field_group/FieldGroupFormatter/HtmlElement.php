@@ -7,7 +7,7 @@
 
 namespace Drupal\field_group\Plugin\field_group\FieldGroupFormatter;
 
-use Drupal\Component\Utility\String;
+use Drupal\Component\Utility\SafeMarkup;
 use Drupal\field_group\FieldGroupFormatterBase;
 
 /**
@@ -59,7 +59,7 @@ class HtmlElement extends FieldGroupFormatterBase {
     $element['#prefix'] = '<' . $this->getSetting('element') . $element_attributes . '>';
     if ($this->getSetting('show_label')) {
       $element['#prefix'] .= '<' . $this->getSetting('label_element') . '><span>';
-      $element['#prefix'] .= String::checkPlain(\Drupal::translation()->translate($group->label));
+      $element['#prefix'] .= SafeMarkup::checkPlain(\Drupal::translation()->translate($group->label));
       $element['#prefix'] .= '</span></' . $this->getSetting('label_element') . '>';
     }
     $element['#suffix'] = '</' . $this->getSetting('element') . '>';

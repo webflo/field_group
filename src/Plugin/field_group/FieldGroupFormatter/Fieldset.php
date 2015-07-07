@@ -7,7 +7,7 @@
 
 namespace Drupal\field_group\Plugin\field_group\FieldGroupFormatter;
 
-use Drupal\Component\Utility\String;
+use Drupal\Component\Utility\SafeMarkup;
 use Drupal\field_group\FieldGroupFormatterBase;
 
 /**
@@ -31,7 +31,7 @@ class Fieldset extends FieldGroupFormatterBase {
   public function preRender(&$element) {
     $element += array(
       '#type' => 'fieldset',
-      '#title' => String::checkPlain(\Drupal::translation()->translate($this->getLabel())),
+      '#title' => SafeMarkup::checkPlain(\Drupal::translation()->translate($this->getLabel())),
       '#pre_render' => array(),
       '#attributes' => array(),
     );

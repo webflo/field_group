@@ -7,7 +7,7 @@
 
 namespace Drupal\field_group\Plugin\field_group\FieldGroupFormatter;
 
-use Drupal\Component\Utility\String;
+use Drupal\Component\Utility\SafeMarkup;
 use Drupal\field_group\FieldGroupFormatterBase;
 
 /**
@@ -37,7 +37,7 @@ class Tab extends FieldGroupFormatterBase {
     $add = array(
       '#type' => 'details',
       '#id' => 'edit-' . $this->group->group_name,
-      '#title' => String::checkPlain(\Drupal::translation()->translate($this->getLabel())),
+      '#title' => SafeMarkup::checkPlain(\Drupal::translation()->translate($this->getLabel())),
       '#description' => $this->getSetting('description'),
     );
 
