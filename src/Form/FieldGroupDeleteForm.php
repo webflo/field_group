@@ -40,15 +40,7 @@ class FieldGroupDeleteForm extends ConfirmFormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $field_group = '', $test = '') {
-    return parent::buildForm($form, $form_state);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-
     $bundles = entity_get_bundles();
     $bundle_label = $bundles[$this->fieldGroup->entity_type][$this->fieldGroup->bundle]['label'];
 
@@ -94,19 +86,19 @@ class FieldGroupDeleteForm extends ConfirmFormBase {
     // Redirect to correct route.
     if ($this->fieldGroup->context == 'form') {
       if ($this->fieldGroup->mode == 'default') {
-        $route_name = "field_ui.form_display_overview_$entity_type_id";
+        $route_name = "entity.entity_form_display.{$entity_type_id}.default";
       }
       else {
-        $route_name = "field_ui.form_display_overview_form_mode_$entity_type_id";
+        $route_name = "entity.entity_form_display.{$entity_type_id}.form_mode";
         $options['form_mode_name'] = $this->fieldGroup->mode;
       }
     }
     else {
       if ($this->fieldGroup->mode == 'default') {
-        $route_name = "field_ui.display_overview_$entity_type_id";
+        $route_name = "entity.entity_view_display.{$entity_type_id}.default";
       }
       else {
-        $route_name = "field_ui.display_overview_view_mode_$entity_type_id";
+        $route_name = "entity.entity_view_display.{$entity_type_id}.view_mode";
         $options['view_mode_name'] = $this->fieldGroup->mode;
       }
     }

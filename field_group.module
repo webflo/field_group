@@ -501,7 +501,7 @@ function field_group_group_delete($group) {
   if ($group->context == 'form') {
     $display = EntityFormDisplay::load($group->entity_type . '.' . $group->bundle . '.' . $group->mode);
   }
-  if ($group->context = 'view') {
+  if ($group->context == 'view') {
     $display = EntityViewDisplay::load($group->entity_type . '.' . $group->bundle . '.' . $group->mode);
   }
 
