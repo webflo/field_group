@@ -216,7 +216,7 @@ function field_group_field_group_build_pre_render_alter(& $element) {
   foreach (Element::children($element) as $name) {
     if (isset($element[$name]['#type']) && $element[$name]['#type'] == 'multipage' && isset($element['additional_settings'])) {
       $parent_group = $element['#fieldgroups'][$name];
-      $move_additional = isset($parent_group->format_settings['instance_settings']['move_additional']) ? $parent_group->format_settings['instance_settings']['move_additional'] : 1;
+      $move_additional = isset($parent_group->format_settings['move_additional']) ? $parent_group->format_settings['move_additional'] : 1;
       $last_pane = NULL;
       foreach (Element::children($element[$name], TRUE) as $pane) {
         $last_pane = $pane;
@@ -704,9 +704,9 @@ function field_group_remove_empty_display_groups(& $element, $groups) {
  */
 function field_group_pre_render_div(&$element, $group, &$rendering_object) {
 
-  $show_label = isset($group->format_settings['instance_settings']['show_label']) ? $group->format_settings['instance_settings']['show_label'] : 0;
-  $label_element = isset($group->format_settings['instance_settings']['label_element']) ? $group->format_settings['instance_settings']['label_element'] : 'h2';
-  $effect = isset($group->format_settings['instance_settings']['effect']) ? $group->format_settings['instance_settings']['effect'] : 'none';
+  $show_label = isset($group->format_settings['show_label']) ? $group->format_settings['show_label'] : 0;
+  $label_element = isset($group->format_settings['label_element']) ? $group->format_settings['label_element'] : 'h2';
+  $effect = isset($group->format_settings['effect']) ? $group->format_settings['effect'] : 'none';
 
   $element['#type'] = 'markup';
   $id = isset($element['#id']) ? ' id="' . $element['#id'] . '"' : '';
