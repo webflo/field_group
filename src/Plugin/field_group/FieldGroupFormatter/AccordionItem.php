@@ -40,7 +40,7 @@ class AccordionItem extends FieldGroupFormatterBase {
     $element += array(
       '#type' => 'markup',
       '#prefix' => '<h3 class="field-group-format-toggler accordion-item' . $active_class . '">
-        <a href="#">' . SafeMarkup::checkPlain(\Drupal::translation()->translate($this->getLabel())) . '</a></h3>
+        <a href="#">' . SafeMarkup::checkPlain($this->t($this->getLabel())) . '</a></h3>
         <div class="field-group-format-wrapper' . $extra_classes . '">',
       '#suffix' => '</div>',
     );
@@ -58,7 +58,7 @@ class AccordionItem extends FieldGroupFormatterBase {
     $form = parent::settingsForm();
 
     $form['formatter'] = array(
-      '#title' => t('Default state'),
+      '#title' => $this->t('Default state'),
       '#type' => 'select',
       '#options' => array_combine($this->pluginDefinition['format_types'], $this->pluginDefinition['format_types']),
       '#default_value' => $this->getSetting('formatter'),
@@ -68,7 +68,7 @@ class AccordionItem extends FieldGroupFormatterBase {
     if ($this->context == 'form') {
       $form['required_fields'] = array(
         '#type' => 'checkbox',
-        '#title' => t('Mark group as required if it contains required fields.'),
+        '#title' => $this->t('Mark group as required if it contains required fields.'),
         '#default_value' => $this->getSetting('required_fields'),
         '#weight' => 2,
       );
@@ -85,11 +85,11 @@ class AccordionItem extends FieldGroupFormatterBase {
     $summary = array();
 
     if ($this->getSetting('required_fields')) {
-      $summary[] = \Drupal::translation()->translate('Mark as required');
+      $summary[] = $this->t('Mark as required');
     }
 
     if ($this->getSetting('description')) {
-      $summary[] = \Drupal::translation()->translate('Description : @description',
+      $summary[] = $this->t('Description : @description',
         array('@description' => $this->getSetting('description'))
       );
     }

@@ -59,7 +59,7 @@ class HtmlElement extends FieldGroupFormatterBase {
     $element['#prefix'] = '<' . $this->getSetting('element') . $element_attributes . '>';
     if ($this->getSetting('show_label')) {
       $element['#prefix'] .= '<' . $this->getSetting('label_element') . '><span>';
-      $element['#prefix'] .= SafeMarkup::checkPlain(\Drupal::translation()->translate($group->label));
+      $element['#prefix'] .= SafeMarkup::checkPlain($this->t($group->label));
       $element['#prefix'] .= '</span></' . $this->getSetting('label_element') . '>';
     }
     $element['#suffix'] = '</' . $this->getSetting('element') . '>';
@@ -73,33 +73,33 @@ class HtmlElement extends FieldGroupFormatterBase {
     $form = parent::settingsForm();
 
     $form['element'] = array(
-      '#title' => t('Element'),
+      '#title' => $this->t('Element'),
       '#type' => 'textfield',
       '#default_value' => $this->getSetting('element'),
-      '#description' => t('E.g. div, section, aside etc.'),
+      '#description' => $this->t('E.g. div, section, aside etc.'),
       '#weight' => 1,
     );
 
     $form['show_label'] = array(
-      '#title' => t('Show label'),
+      '#title' => $this->t('Show label'),
       '#type' => 'select',
-      '#options' => array(0 => t('No'), 1 => t('Yes')),
+      '#options' => array(0 => $this->t('No'), 1 => $this->t('Yes')),
       '#default_value' => $this->getSetting('show_label'),
       '#weight' => 2,
     );
 
     $form['label_element'] = array(
-      '#title' => t('Label element'),
+      '#title' => $this->t('Label element'),
       '#type' => 'textfield',
       '#default_value' => $this->getSetting('label_element'),
       '#weight' => 3,
     );
 
     $form['attributes'] = array(
-      '#title' => t('Attributes'),
+      '#title' => $this->t('Attributes'),
       '#type' => 'textfield',
       '#default_value' => $this->getSetting('attributes'),
-      '#description' => t('E.g. name="anchor"'),
+      '#description' => $this->t('E.g. name="anchor"'),
       '#weight' => 4,
     );
 
@@ -112,24 +112,24 @@ class HtmlElement extends FieldGroupFormatterBase {
   public function settingsSummary() {
 
     $summary = parent::settingsSummary();
-    $summary[] = \Drupal::translation()->translate('Element: @element',
+    $summary[] = $this->t('Element: @element',
       array('@element' => $this->getSetting('element'))
     );
 
     if ($this->getSetting('show_label')) {
-      $summary[] = \Drupal::translation()->translate('Label element: @element',
+      $summary[] = $this->t('Label element: @element',
         array('@element' => $this->getSetting('label_element'))
       );
     }
 
     if ($this->getSetting('attributes')) {
-      $summary[] = \Drupal::translation()->translate('Attributes: @attributes',
+      $summary[] = $this->t('Attributes: @attributes',
         array('@attributes' => $this->getSetting('attributes'))
       );
     }
 
     if ($this->getSetting('required_fields')) {
-      $summary[] = \Drupal::translation()->translate('Mark as required');
+      $summary[] = $this->t('Mark as required');
     }
 
     return $summary;

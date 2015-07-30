@@ -37,7 +37,7 @@ class Tab extends FieldGroupFormatterBase {
     $add = array(
       '#type' => 'details',
       '#id' => 'edit-' . $this->group->group_name,
-      '#title' => SafeMarkup::checkPlain(\Drupal::translation()->translate($this->getLabel())),
+      '#title' => SafeMarkup::checkPlain($this->t($this->getLabel())),
       '#description' => $this->getSetting('description'),
     );
 
@@ -64,7 +64,7 @@ class Tab extends FieldGroupFormatterBase {
     $form = parent::settingsForm();
 
     $form['formatter'] = array(
-      '#title' => t('Default state'),
+      '#title' => $this->t('Default state'),
       '#type' => 'select',
       '#options' => array_combine($this->pluginDefinition['format_types'], $this->pluginDefinition['format_types']),
       '#default_value' => $this->getSetting('formatter'),
@@ -74,7 +74,7 @@ class Tab extends FieldGroupFormatterBase {
     if ($this->context == 'form') {
       $form['required_fields'] = array(
         '#type' => 'checkbox',
-        '#title' => t('Mark group as required if it contains required fields.'),
+        '#title' => $this->t('Mark group as required if it contains required fields.'),
         '#default_value' => $this->getSetting('required_fields'),
         '#weight' => 2,
       );

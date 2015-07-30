@@ -65,7 +65,6 @@ abstract class FieldGroupFormatterBase extends PluginSettingsBase implements Fie
    *   The formatter label.
    */
   public function __construct($plugin_id, $plugin_definition, $group, array $settings, $label) {
-
     parent::__construct(array(), $plugin_id, $plugin_definition);
 
     $this->group = $group;
@@ -129,7 +128,7 @@ abstract class FieldGroupFormatterBase extends PluginSettingsBase implements Fie
     }
 
     if ($this->getSetting('id')) {
-      $summary[] = \Drupal::translation()->translate('Id: @id', array('@id' => $this->getSetting('id')));
+      $summary[] = $this->t('Id: @id', array('@id' => $this->getSetting('id')));
     }
 
     if ($this->getSetting('classes')) {

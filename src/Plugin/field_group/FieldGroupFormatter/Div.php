@@ -43,39 +43,39 @@ class Div extends FieldGroupFormatterBase {
     $form = parent::settingsForm();
 
     $form['formatter'] = array(
-      '#title' => t('Format'),
+      '#title' => $this->t('Format'),
       '#type' => 'select',
       '#options' => array_combine($this->pluginDefinition['format_types'], $this->pluginDefinition['format_types']),
       '#default_value' => $this->getSetting('formatter'),
       '#weight' => -4,
     );
 
-    $form['label']['#description'] = t('Please enter a label for collapsible elements');
+    $form['label']['#description'] = $this->t('Please enter a label for collapsible elements');
     $form['show_label'] = array(
-      '#title' => t('Show label'),
+      '#title' => $this->t('Show label'),
       '#type' => 'select',
-      '#options' => array(0 => t('No'), 1 => t('Yes')),
+      '#options' => array(0 => $this->t('No'), 1 => $this->t('Yes')),
       '#default_value' => $this->getSetting('show_label'),
       '#weight' => 2,
     );
     $form['label_element'] = array(
-      '#title' => t('Label element'),
+      '#title' => $this->t('Label element'),
       '#type' => 'select',
-      '#options' => array('h2' => t('Header 2'), 'h3' => t('Header 3')),
+      '#options' => array('h2' => $this->t('Header 2'), 'h3' => $this->t('Header 3')),
       '#default_value' => $this->getSetting('label_element'),
       '#weight' => 2,
     );
     $form['effect'] = array(
-      '#title' => t('Effect'),
+      '#title' => $this->t('Effect'),
       '#type' => 'select',
-      '#options' => array('none' => t('None'), 'blind' => t('Blind')),
+      '#options' => array('none' => $this->t('None'), 'blind' => $this->t('Blind')),
       '#default_value' => $this->getSetting('effect'),
       '#weight' => 3,
     );
     $form['speed'] = array(
-      '#title' => t('Speed'),
+      '#title' => $this->t('Speed'),
       '#type' => 'select',
-      '#options' => array('none' => t('None'), 'slow' => t('Slow'), 'fast' => t('Fast')),
+      '#options' => array('none' => $this->t('None'), 'slow' => $this->t('Slow'), 'fast' => $this->t('Fast')),
       '#default_value' => $this->getSetting('speed'),
       '#weight' => 3,
     );
@@ -83,7 +83,7 @@ class Div extends FieldGroupFormatterBase {
     if ($this->context == 'form') {
       $form['required_fields'] = array(
         '#type' => 'checkbox',
-        '#title' => t('Mark group as required if it contains required fields.'),
+        '#title' => $this->t('Mark group as required if it contains required fields.'),
         '#default_value' => $this->getSetting('required_fields'),
         '#weight' => 2,
       );
@@ -100,26 +100,26 @@ class Div extends FieldGroupFormatterBase {
     $summary = parent::settingsSummary();
 
     if ($this->getSetting('effect') != 'none') {
-      $summary[] = \Drupal::translation()->translate('Effect : @effect',
+      $summary[] = $this->t('Effect : @effect',
         array('@effect' => $this->getSetting('effect'))
       );
-      $summary[] = \Drupal::translation()->translate('Speed : @speed',
+      $summary[] = $this->t('Speed : @speed',
         array('@speed' => $this->getSetting('speed'))
       );
     }
 
     if ($this->getSetting('show_label')) {
-      $summary[] = \Drupal::translation()->translate('Label element @element',
+      $summary[] = $this->t('Label element @element',
         array('@element' => $this->getSetting('label_element'))
       );
     }
 
     if ($this->getSetting('required_fields')) {
-      $summary[] = \Drupal::translation()->translate('Mark as required');
+      $summary[] = $this->t('Mark as required');
     }
 
     if ($this->getSetting('description')) {
-      $summary[] = \Drupal::translation()->translate('Description : @description',
+      $summary[] = $this->t('Description : @description',
         array('@description' => $this->getSetting('description'))
       );
     }

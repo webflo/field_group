@@ -35,7 +35,7 @@ class Details extends FieldGroupFormatterBase {
 
     $element += array(
       '#type' => 'details',
-      '#title' => SafeMarkup::checkPlain(\Drupal::translation()->translate($this->getLabel())),
+      '#title' => SafeMarkup::checkPlain($this->t($this->getLabel())),
       '#open' => $this->getSetting('open')
     );
 
@@ -64,7 +64,7 @@ class Details extends FieldGroupFormatterBase {
 
     $form['open'] = array(
       '#type' => 'checkbox',
-      '#title' => t('Display element open by default.'),
+      '#title' => $this->t('Display element open by default.'),
       '#default_value' => $this->getSetting('open'),
     );
 
@@ -78,10 +78,10 @@ class Details extends FieldGroupFormatterBase {
 
     $summary = array();
     if ($this->getSetting('open')) {
-      $summary[] = \Drupal::translation()->translate('Default state open');
+      $summary[] = $this->t('Default state open');
     }
     else {
-      $summary[] = \Drupal::translation()->translate('Default state closed');
+      $summary[] = $this->t('Default state closed');
     }
 
     return $summary;
